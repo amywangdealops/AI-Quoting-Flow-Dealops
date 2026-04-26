@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Database, 
-  History, 
-  Zap, 
-  Package, 
-  FileText, 
-  CheckCircle2, 
-  Loader2, 
+import {
+  Search,
+  Database,
+  History,
+  Zap,
+  Package,
+  FileText,
+  CheckCircle2,
+  Loader2,
   MoreHorizontal,
   Info,
   MessageSquare,
@@ -31,15 +31,20 @@ import {
   Sparkles,
   ArrowRight
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Cell 
+import { Button } from './components/Button';
+import Badge from './components/Badge';
+import { Input } from './components/Input';
+import Tooltip from './components/Tooltip';
+import Toggle from './components/Toggle';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  Cell
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
@@ -182,7 +187,7 @@ const QuoteCard = ({ quote, onClick }: QuoteCardProps) => (
             <h3 className="font-semibold text-ew-foreground">{quote.title}</h3>
             <span className="text-[10px] text-ew-muted-foreground italic uppercase tracking-wider">{quote.updated}</span>
           </div>
-          <span className="text-[10px] font-bold px-2 py-0.5 bg-ew-muted text-ew-foreground rounded uppercase tracking-wider mt-1 inline-block border border-ew-border">{quote.status}</span>
+          <Badge color="gray" className="mt-1">{quote.status}</Badge>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -200,7 +205,7 @@ const QuoteCard = ({ quote, onClick }: QuoteCardProps) => (
       <div className="flex items-baseline gap-2">
         <span className="font-bold text-ew-muted-foreground text-[11px] uppercase tracking-wider whitespace-nowrap min-w-[140px]">AI Generated Quote</span>
         <span className="text-ew-muted-foreground text-xs">Confidence</span>
-        <span className="text-ew-primary font-bold tracking-tight text-xs">{quote.confidence}</span>
+        <Badge color="green">{quote.confidence}</Badge>
       </div>
       <p className="text-ew-muted-foreground leading-relaxed text-xs"><span className="font-bold text-ew-foreground uppercase text-[10px] tracking-wide mr-1">Evidence •</span>{quote.evidence}</p>
       <p className="text-ew-muted-foreground leading-relaxed text-xs"><span className="font-bold text-ew-foreground uppercase text-[10px] tracking-wide mr-1">Benchmark •</span>{quote.benchmark}</p>
@@ -310,16 +315,13 @@ const SelectProductsView = ({
           </div>
           <div className="flex items-center gap-3">
              <div className="flex items-center gap-4 mr-4 text-[10px] font-bold text-ew-muted-foreground uppercase tracking-widest">
-                <span>Draft</span>
+                <Badge color="gray">Draft</Badge>
              </div>
-            <button className="flex items-center gap-2 px-4 py-1.5 bg-ew-muted border border-ew-border rounded-lg text-[11px] font-bold uppercase tracking-wider text-ew-muted-foreground">
-              <Info className="w-4 h-4" />
-              <span>Info</span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-1.5 bg-ew-muted border border-ew-border rounded-lg text-[11px] font-bold uppercase tracking-wider text-ew-muted-foreground">
+            <Button color="white" icon="info" label="Info" onClick={() => {}} />
+            <Button color="white" onClick={() => {}}>
               <MessageSquare className="w-4 h-4" />
               <span>Comments</span>
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -379,52 +381,18 @@ const SelectProductsView = ({
 
         {/* Footer */}
         <footer className="h-20 bg-white border-t border-ew-border flex items-center justify-end px-12 shrink-0">
-          <button 
-            onClick={onNext}
-            className="px-10 py-2.5 bg-ew-foreground text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all font-sans"
-          >
-            Next
-          </button>
+          <Button color="primary" label="Next" onClick={onNext} />
         </footer>
       </div>
     </div>
   );
 };
 
-// --- Reasoning Tooltip Component ---
-
-const ReasoningTooltip = ({ 
-  type, 
-  content, 
-  isVisible 
-}: { 
-  type: 'selection' | 'price', 
-  content: string, 
-  isVisible: boolean 
-}) => {
-  if (!isVisible) return null;
-  
-  return (
-    <div className={`absolute z-50 bottom-full ${isVisible ? 'block' : 'hidden'} left-0 mb-3 w-[320px] bg-[#0f172a] rounded-xl p-4 shadow-2xl border border-slate-700/50 pointer-events-none`}>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] font-black text-white/90 uppercase tracking-[0.15em]">
-          {type === 'selection' ? 'AI Product Selection Reasoning' : 'AI Price Reasoning'}
-        </span>
-        <span className="px-1.5 py-0.5 bg-green-500/10 text-green-400 text-[8px] font-black rounded uppercase tracking-widest border border-green-500/20">High</span>
-      </div>
-      <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
-        {content}
-      </p>
-      {/* Arrow */}
-      <div className="absolute top-full left-4 border-[6px] border-transparent border-t-[#0f172a]" />
-    </div>
-  );
-};
 
 // --- Quote Detail View Component ---
 
 const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { onBack: () => void, onSelectProducts: () => void, onFinish: () => void, quoteName: string }) => {
-  const [hoveredTip, setHoveredTip] = useState<{ id: string, type: 'name' | 'price' } | null>(null);
+  const [usageMinimum, setUsageMinimum] = useState(false);
 
   const chartData = [
     { name: 'No Commitment', total: 54988, color: '#006644' },
@@ -498,16 +466,13 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
           </div>
           <div className="flex items-center gap-3">
              <div className="flex items-center gap-4 mr-4 text-[10px] font-bold text-ew-muted-foreground uppercase tracking-widest">
-                <span>Draft</span>
+                <Badge color="gray">Draft</Badge>
              </div>
-            <button className="flex items-center gap-2 px-4 py-1.5 bg-ew-muted border border-ew-border rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-ew-border transition-all text-ew-muted-foreground">
-              <Info className="w-4 h-4" />
-              <span>Info</span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-1.5 bg-ew-muted border border-ew-border rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-ew-border transition-all text-ew-muted-foreground">
+            <Button color="white" icon="info" label="Info" onClick={() => {}} />
+            <Button color="white" onClick={() => {}}>
               <MessageSquare className="w-4 h-4" />
               <span>Comments</span>
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -536,7 +501,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                  </div>
                  <div className="flex items-center gap-4">
                    <span className="text-[10px] font-black text-ew-muted-foreground/50 uppercase tracking-widest">Confidence</span>
-                   <span className="px-3 py-1 bg-green-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest">High</span>
+                   <Badge color="darkGreen">High</Badge>
                  </div>
                </div>
                
@@ -677,20 +642,11 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                <div className="divide-y divide-ew-border/50">
                   {pricingRows.map((row, i) => (
                     <div key={i} className="p-4 grid grid-cols-[1fr_120px_100px_100px_120px_100px_100px_140px_40px] gap-4 items-center group hover:bg-ew-background/50 transition-colors">
-                       <div className="flex items-center gap-3 relative">
+                       <div className="flex items-center gap-3">
                           <span className="text-xs font-bold text-ew-foreground">{row.name}</span>
-                          <div 
-                            className="relative"
-                            onMouseEnter={() => setHoveredTip({ id: row.id, type: 'name' })}
-                            onMouseLeave={() => setHoveredTip(null)}
-                          >
+                          <Tooltip as="span" location="TOP" text={row.reasoning}>
                             <Info className="w-3.5 h-3.5 text-ew-muted-foreground opacity-20 group-hover:opacity-60 cursor-help transition-opacity" />
-                            <ReasoningTooltip 
-                              type="selection"
-                              content={row.reasoning}
-                              isVisible={hoveredTip?.id === row.id && hoveredTip?.type === 'name'}
-                            />
-                          </div>
+                          </Tooltip>
                        </div>
                        <div className="h-9 border border-ew-border rounded-lg bg-ew-background/30 flex items-center justify-center text-xs font-bold font-mono">
                           {row.vol}
@@ -699,22 +655,13 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                        <div className="text-xs font-bold text-brand-accent-gold text-right font-mono">{row.l1}</div>
                        <div className="h-9 border border-ew-border rounded-lg bg-white flex items-center justify-center text-xs font-bold font-mono ring-2 ring-brand-accent-gold/10 relative">
                           {row.quote}
-                          <div 
-                            className="absolute -right-2 -top-2 z-10"
-                            onMouseEnter={() => setHoveredTip({ id: row.id, type: 'price' })}
-                            onMouseLeave={() => setHoveredTip(null)}
-                          >
+                          <Tooltip as="span" location="TOP" text={row.priceReasoning} className="absolute -right-2 -top-2 z-10">
                             <Info className="w-3 h-3 text-ew-muted-foreground opacity-0 group-hover:opacity-40 cursor-help transition-opacity" />
-                            <ReasoningTooltip 
-                              type="price"
-                              content={row.priceReasoning}
-                              isVisible={hoveredTip?.id === row.id && hoveredTip?.type === 'price'}
-                            />
-                          </div>
+                          </Tooltip>
                        </div>
                        <div className="text-xs font-bold text-ew-muted-foreground text-center font-mono opacity-60">{row.discount}</div>
                        <div className="flex justify-center">
-                          <span className="px-2 py-0.5 bg-green-500/10 text-green-600 text-[9px] font-black rounded uppercase tracking-widest border border-green-500/20">None</span>
+                          <Badge color="green" size="small">None</Badge>
                        </div>
                        <div className="text-xs font-bold text-ew-foreground text-right font-mono">{row.revenue}</div>
                        <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
@@ -724,18 +671,13 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                   ))}
                </div>
                <div className="p-6 bg-ew-background/40 border-t border-ew-border">
-                  <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-ew-border rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-ew-muted transition-all">
-                    <Plus className="w-4 h-4" />
-                    Add / Edit Products
-                  </button>
+                  <Button color="white" icon="plus" label="Add / Edit Products" onClick={() => {}} />
                </div>
             </div>
 
             {/* Toggle Row */}
             <div className="flex items-center gap-4 pl-4">
-               <div className="w-10 h-5 bg-ew-muted border border-ew-border rounded-full relative cursor-pointer">
-                  <div className="absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
-               </div>
+               <Toggle enabled={usageMinimum} onToggle={setUsageMinimum} size="small" />
                <span className="text-[10px] font-black uppercase tracking-widest text-ew-muted-foreground opacity-80">Monthly usage minimum</span>
             </div>
 
@@ -770,15 +712,15 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                         <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} />
-                        <Tooltip 
+                        <RechartsTooltip
                           cursor={{ fill: '#f8fafc' }}
-                          contentStyle={{ 
-                            borderRadius: '16px', 
+                          contentStyle={{
+                            borderRadius: '16px',
                             border: '1px solid #e5e7eb',
                             boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                             fontSize: '12px',
                             fontWeight: 'bold'
-                          }} 
+                          }}
                         />
                         <Bar dataKey="total" radius={[8, 8, 0, 0]} barSize={80}>
                           {chartData.map((entry, index) => (
@@ -817,17 +759,8 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
             </div>
           </div>
           <div className="flex items-center gap-4">
-             <button 
-               onClick={onBack}
-               className="px-8 py-3.5 bg-white border border-ew-border rounded-xl text-xs font-black uppercase tracking-[0.2em] text-ew-foreground hover:bg-ew-background transition-all"
-             >
-               Back
-             </button>
-             <button 
-               onClick={onFinish}
-               className="px-12 py-3.5 bg-ew-foreground text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-95 transition-all shadow-[0_20px_40px_rgba(0,0,0,0.1)]">
-               Finish
-             </button>
+             <Button color="white" label="Back" onClick={onBack} />
+             <Button color="primary" label="Finish" onClick={onFinish} />
           </div>
         </footer>
       </div>
@@ -937,14 +870,11 @@ export default function App() {
             <span className="text-ew-foreground">Al Mabrook - ABI</span>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-1.5 bg-ew-muted border border-ew-border rounded-full text-[11px] font-bold uppercase tracking-wider hover:bg-ew-border transition-all text-ew-muted-foreground">
-              <Info className="w-4 h-4" />
-              <span>Info</span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-1.5 bg-ew-muted border border-ew-border rounded-full text-[11px] font-bold uppercase tracking-wider hover:bg-ew-border transition-all text-ew-muted-foreground">
+            <Button color="white" icon="info" label="Info" onClick={() => {}} />
+            <Button color="white" onClick={() => {}}>
               <MessageSquare className="w-4 h-4" />
               <span>Comments</span>
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -956,15 +886,8 @@ export default function App() {
               <h1 className="text-4xl font-light tracking-tight text-ew-foreground">Al Mabrook - ABI</h1>
             </div>
             <div className="flex items-center gap-3">
-              <button className="px-5 py-2.5 bg-ew-muted border border-ew-border rounded-full text-xs font-bold uppercase tracking-wider text-ew-muted-foreground hover:bg-ew-border transition-all">
-                Proposal package
-              </button>
-              <button 
-                onClick={() => setCurrentView('select-products')}
-                className="px-5 py-2.5 bg-ew-foreground text-white rounded-full text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all"
-              >
-                Create a quote
-              </button>
+              <Button color="white" label="Proposal package" onClick={() => {}} />
+              <Button color="primary" label="Create a quote" onClick={() => setCurrentView('select-products')} />
             </div>
           </div>
 
@@ -1001,16 +924,11 @@ export default function App() {
           </div>
 
           <div className="flex gap-2 mb-8">
-            <button className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-ew-muted border border-ew-border rounded-lg hover:bg-ew-border transition-all text-ew-muted-foreground">
+            <Button color="white" onClick={() => {}}>
               <RefreshCw className="w-3 h-3" />
-              Compare
-            </button>
-            <button 
-              onClick={() => setCurrentView('pricing-options')}
-              className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-ew-muted border border-ew-border rounded-lg hover:bg-ew-border transition-all text-ew-muted-foreground"
-            >
-              Edit
-            </button>
+              <span>Compare</span>
+            </Button>
+            <Button color="white" label="Edit" onClick={() => setCurrentView('pricing-options')} />
           </div>
 
           <div className="space-y-4 mb-16">
@@ -1070,14 +988,14 @@ export default function App() {
         </div>
 
         <div className="mt-16 flex flex-col gap-3">
-          <button className="w-full flex items-center justify-center gap-2 py-3 bg-ew-muted border border-ew-border rounded-xl text-[10px] font-bold uppercase tracking-widest text-ew-muted-foreground hover:bg-ew-border transition-all">
+          <Button color="white" className="w-full justify-center" onClick={() => {}}>
             <RefreshCw className="w-4 h-4" />
-            Refresh data
-          </button>
-          <button className="w-full flex items-center justify-center gap-2 py-3 bg-ew-muted border border-ew-border rounded-xl text-[10px] font-bold uppercase tracking-widest text-ew-muted-foreground hover:bg-ew-border transition-all">
+            <span>Refresh data</span>
+          </Button>
+          <Button color="white" className="w-full justify-center" onClick={() => {}}>
             <ExternalLink className="w-4 h-4" />
-            Open in SFDC
-          </button>
+            <span>Open in SFDC</span>
+          </Button>
         </div>
       </aside>
 
@@ -1195,12 +1113,12 @@ export default function App() {
                           <div className="space-y-4">
                              <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-[0.15em] text-ew-muted-foreground/60 px-1">Quote Name</label>
-                                <input 
-                                   type="text" 
+                                <Input
+                                   type="text"
                                    value={quoteName}
                                    onChange={(e) => setQuoteName(e.target.value)}
                                    placeholder="Enter quote name..."
-                                   className="w-full p-4 bg-white border border-ew-border/50 rounded-2xl text-sm font-bold text-ew-foreground focus:outline-none focus:ring-2 focus:ring-ew-primary/20 focus:border-ew-primary/30 transition-all shadow-sm"
+                                   className="w-full font-bold text-ew-foreground"
                                 />
                              </div>
 
@@ -1256,10 +1174,7 @@ export default function App() {
                                <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center gap-3">
                                      <h4 className="text-sm font-bold text-ew-foreground tracking-tight">{prod.name}</h4>
-                                     <span className={cn(
-                                       "px-2 py-0.5 text-[8px] font-black rounded uppercase tracking-widest border",
-                                       prod.confidence === 'HIGH' ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-brand-accent-gold/10 text-brand-accent-gold border-brand-accent-gold/20"
-                                     )}>{prod.confidence}</span>
+                                     <Badge color={prod.confidence === 'HIGH' ? 'green' : 'yellow'} size="small">{prod.confidence}</Badge>
                                   </div>
                                   <div className="text-right">
                                     <span className="text-sm font-black text-ew-foreground tracking-tighter">{prod.price}</span>
@@ -1434,18 +1349,18 @@ export default function App() {
                         </div>
 
                         <div className="flex items-center gap-5">
-                           <button 
+                           <Button
+                             color="white"
+                             label="Close"
+                             className="flex-1 justify-center"
                              onClick={() => { setIsCopilotOpen(false); setProcessStep(-1); }}
-                             className="flex-1 py-5 bg-white border border-ew-border rounded-[20px] text-xs font-black uppercase tracking-widest text-ew-foreground hover:bg-ew-background transition-all shadow-sm"
-                           >
-                             Close
-                           </button>
-                           <button 
+                           />
+                           <Button
+                             color="primary"
+                             label="View Optimized Quote"
+                             className="flex-1 justify-center"
                              onClick={() => { setIsCopilotOpen(false); setCurrentView('pricing-options'); }}
-                             className="flex-1 py-5 bg-ew-primary rounded-[20px] text-xs font-black uppercase tracking-widest text-white hover:opacity-95 transition-all shadow-[0_24px_48px_rgba(0,0,0,0.12)]"
-                           >
-                             View Optimized Quote
-                           </button>
+                           />
                         </div>
                      </div>
                   </motion.div>
