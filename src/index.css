@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  /* E&W Brand Tokens (Light Mode Default) */
+  --color-ew-primary: #1a1a1a;
+  --color-ew-primary-foreground: #ffffff;
+  --color-ew-accent: #CFCCAE;
+  --color-ew-accent-foreground: #1a1a1a;
+  --color-ew-background: #fdfdfc;
+  --color-ew-foreground: #1a1a1a;
+  --color-ew-card: #ffffff;
+  --color-ew-secondary: #f0efe9;
+  --color-ew-muted: #f0efe9;
+  --color-ew-muted-foreground: #737373;
+  --color-ew-border: #e2e0d8;
+  --color-ew-border-subtle: #eeede7;
+  
+  --color-brand-accent-gold: #CFCCAE;
+}
+
+@layer base {
+  body {
+    @apply font-sans text-ew-foreground bg-ew-background;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+.frosted-glass {
+  @apply bg-white/70 border border-black/5 backdrop-blur-xl border-t-white/40;
+}
+
+.intel-card {
+  @apply bg-white border border-ew-border/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
