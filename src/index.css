@@ -48,3 +48,14 @@
   background: rgba(0, 0, 0, 0.1);
   border-radius: 10px;
 }
+
+/* Dealops Tooltip pattern */
+.has-tooltip .tooltip {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.has-tooltip:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
