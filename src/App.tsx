@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
   Database,
   History,
   Zap,
-  Package,
   FileText,
   CheckCircle2,
   Loader2,
@@ -25,11 +24,10 @@ import {
   Trash2,
   Calendar,
   Lock,
-  ChevronLeft,
   Monitor,
   Check,
   Sparkles,
-  ArrowRight
+  Copy
 } from 'lucide-react';
 import { Button } from './components/Button';
 import Badge from './components/Badge';
@@ -49,9 +47,15 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 
+const toSentenceCase = (value: string) =>
+  value.length > 0 ? value.charAt(0) + value.slice(1).toLowerCase() : value;
+
+const LOGO_SALESFORCE = '/salesforce.png';
+const LOGO_GONG = '/gong.png';
+
 // --- Types ---
 
-type StepId = 'context' | 'similar' | 'historical' | 'recommend' | 'mapping' | 'quote';
+type StepId = 'context' | 'similar' | 'historical' | 'recommend' | 'quote';
 
 interface Step {
   id: StepId;
@@ -74,6 +78,56 @@ const OPPORTUNITY_DATA = {
   vertical: 'Fintech',
   subvertical: 'Alternative investments',
   employees: 9
+};
+
+const OPPORTUNITY_OVERVIEW_ROWS: { key: keyof typeof OPPORTUNITY_DATA; label: string }[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'type', label: 'Type' },
+  { key: 'owner', label: 'Owner' },
+  { key: 'stage', label: 'Stage' },
+  { key: 'segment', label: 'GTM Segment' },
+  { key: 'region', label: 'Product Region' },
+  { key: 'acv', label: 'Qualified ACV' },
+  { key: 'vertical', label: 'Vertical' },
+  { key: 'subvertical', label: 'Subvertical' },
+  { key: 'employees', label: 'Employee Count' },
+];
+
+const BENCHMARK_HISTORICAL_ROWS: {
+  label: string;
+  vol: string;
+  price: string;
+}[] = [
+  { label: 'Platform Support Services - Basic', vol: '1 vol', price: '$2000.0000' },
+  { label: 'Auth', vol: '2,167 vol', price: '$1.3800' },
+  { label: 'Balance', vol: '2,167 vol', price: '$0.0920' },
+  { label: 'Identity', vol: '2,167 vol', price: '$1.3800' },
+];
+
+type RecConfidence = 'HIGH' | 'MEDIUM';
+
+const RECOMMENDED_PRODUCT_BY_LABEL: Record<
+  string,
+  { confidence: RecConfidence; price: string; units: string; detail: string }
+> = {
+  Auth: {
+    confidence: 'HIGH',
+    price: '$0.6700',
+    units: '833 units',
+    detail: 'Bundled rate on 10/15 and 10/08 calls; bank account verification required.',
+  },
+  Identity: {
+    confidence: 'HIGH',
+    price: '$0.6700',
+    units: '833 units',
+    detail: 'Same bundle; account-holder matching required.',
+  },
+  Balance: {
+    confidence: 'MEDIUM',
+    price: '$0.0800',
+    units: '833 units',
+    detail: 'Inferred from peer benchmarks and account-linking discussion.',
+  },
 };
 
 interface Quote {
@@ -130,38 +184,54 @@ const Sidebar = () => (
   </div>
 );
 
-const IntelCard = ({ title, icon: Icon, children, isComplete, subtitle }: { title: string, icon: any, children: React.ReactNode, isComplete: boolean, subtitle?: string }) => (
+const IntelCard = ({
+  title,
+  icon: Icon,
+  children,
+  isComplete,
+  subtitle,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  isComplete: boolean;
+  subtitle?: string;
+}) => (
   <motion.div 
     initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
-    className="intel-card mb-4"
+    className="intel-card"
   >
     <div className={cn(
-      "px-5 py-4 flex items-center justify-between border-b border-ew-border/30",
+      "flex items-center justify-between border-b border-ew-border/30 px-4 py-3",
       isComplete ? "bg-ew-muted/20" : "bg-brand-accent-gold/5"
     )}>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <div className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-500",
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-500",
           isComplete ? "bg-ew-foreground/5 text-ew-foreground" : "bg-brand-accent-gold/10 text-brand-accent-gold animate-pulse"
         )}>
-          <Icon className="w-4 h-4" />
+          <Icon className="h-4 w-4" />
         </div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-ew-foreground">
+          <div className="flex items-baseline gap-2">
+            <span className="text-sm font-semibold leading-snug tracking-tight text-ew-foreground">
               {title}
             </span>
-            {subtitle && <span className="text-[10px] text-ew-muted-foreground font-mono">{subtitle}</span>}
+            {subtitle && (
+              <span className="text-xs tabular-nums text-ew-muted-foreground font-mono">{subtitle}</span>
+            )}
           </div>
           {!isComplete && (
-            <span className="text-[9px] text-brand-accent-gold font-bold uppercase tracking-wider block animate-pulse">Processing...</span>
+            <span className="mt-0.5 block text-xs font-medium tracking-tight text-ew-muted-foreground">
+              Processing…
+            </span>
           )}
         </div>
       </div>
-      {isComplete && <CheckCircle2 className="w-4 h-4 text-ew-primary" />}
+      {isComplete && <CheckCircle2 className="h-4 w-4 shrink-0 text-ew-primary" />}
     </div>
-    <div className="p-5 bg-white">
+    <div className="bg-white p-3.5">
       {children}
     </div>
   </motion.div>
@@ -176,7 +246,7 @@ interface QuoteCardProps {
 const QuoteCard = ({ quote, onClick }: QuoteCardProps) => (
   <div 
     onClick={onClick}
-    className="bg-white border border-ew-border/50 rounded-2xl p-6 mb-4 hover:border-brand-accent-gold/50 transition-all group cursor-pointer shadow-sm hover:shadow-md">
+    className="group mb-4 cursor-pointer rounded-2xl border border-ew-border/50 bg-white p-6 transition-colors hover:border-brand-accent-gold/50">
     <div className="flex items-start justify-between mb-4">
       <div className="flex items-center gap-3">
         <div className="w-5 h-5 border border-ew-border rounded flex items-center justify-center shrink-0">
@@ -185,7 +255,7 @@ const QuoteCard = ({ quote, onClick }: QuoteCardProps) => (
         <div>
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-ew-foreground">{quote.title}</h3>
-            <span className="text-[10px] text-ew-muted-foreground italic uppercase tracking-wider">{quote.updated}</span>
+            <span className="text-xs text-ew-muted-foreground italic tracking-tight">{quote.updated}</span>
           </div>
           <Badge color="gray" className="mt-1">{quote.status}</Badge>
         </div>
@@ -203,13 +273,13 @@ const QuoteCard = ({ quote, onClick }: QuoteCardProps) => (
     
     <div className="space-y-3 text-sm">
       <div className="flex items-baseline gap-2">
-        <span className="font-bold text-ew-muted-foreground text-[11px] uppercase tracking-wider whitespace-nowrap min-w-[140px]">AI Generated Quote</span>
+        <span className="min-w-[140px] whitespace-nowrap text-sm font-bold tracking-tight text-ew-muted-foreground">AI generated quote</span>
         <span className="text-ew-muted-foreground text-xs">Confidence</span>
-        <Badge color="green">{quote.confidence}</Badge>
+        <Badge color="green">{toSentenceCase(quote.confidence)}</Badge>
       </div>
-      <p className="text-ew-muted-foreground leading-relaxed text-xs"><span className="font-bold text-ew-foreground uppercase text-[10px] tracking-wide mr-1">Evidence •</span>{quote.evidence}</p>
-      <p className="text-ew-muted-foreground leading-relaxed text-xs"><span className="font-bold text-ew-foreground uppercase text-[10px] tracking-wide mr-1">Benchmark •</span>{quote.benchmark}</p>
-      <p className="text-ew-muted-foreground leading-relaxed text-xs"><span className="font-bold text-ew-foreground uppercase text-[10px] tracking-wide mr-1">Strategy •</span>{quote.strategy}</p>
+      <p className="text-ew-muted-foreground leading-relaxed text-xs"><span className="mr-1 text-xs font-bold tracking-tight text-ew-foreground">Evidence •</span>{quote.evidence}</p>
+      <p className="text-ew-muted-foreground leading-relaxed text-xs"><span className="mr-1 text-xs font-bold tracking-tight text-ew-foreground">Benchmark •</span>{quote.benchmark}</p>
+      <p className="text-ew-muted-foreground leading-relaxed text-xs"><span className="mr-1 text-xs font-bold tracking-tight text-ew-foreground">Strategy •</span>{quote.strategy}</p>
     </div>
   </div>
 );
@@ -305,7 +375,7 @@ const SelectProductsView = ({
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
         <header className="h-14 border-b border-ew-border bg-white px-6 flex items-center justify-between shrink-0 z-10">
-          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-ew-muted-foreground">
+          <div className="flex items-center gap-3 text-sm font-bold tracking-tight text-ew-muted-foreground">
             <LayoutGrid className="w-4 h-4" />
             <span>Opportunities</span>
             <ChevronRight className="w-3 h-3 opacity-30" />
@@ -314,7 +384,7 @@ const SelectProductsView = ({
             <span className="text-ew-foreground">{quoteName}</span>
           </div>
           <div className="flex items-center gap-3">
-             <div className="flex items-center gap-4 mr-4 text-[10px] font-bold text-ew-muted-foreground uppercase tracking-widest">
+             <div className="flex items-center gap-4 mr-4 text-xs font-bold text-ew-muted-foreground tracking-tight">
                 <Badge color="gray">Draft</Badge>
              </div>
             <Button color="white" icon="info" label="Info" onClick={() => {}} />
@@ -326,7 +396,7 @@ const SelectProductsView = ({
         </header>
 
         {/* Wizard Progress */}
-        <div className="bg-white border-b border-ew-border px-8 py-3 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
+        <div className="bg-white border-b border-ew-border px-8 py-3 flex items-center gap-4 text-xs font-bold tracking-tight">
            <span className="text-ew-muted-foreground cursor-pointer hover:text-ew-primary" onClick={onBack}>Quote Configuration</span>
            <ChevronRight className="w-3 h-3 text-ew-muted-foreground opacity-30" />
            <span className="text-ew-foreground border-b-2 border-ew-primary pb-0.5">Select Products</span>
@@ -338,13 +408,13 @@ const SelectProductsView = ({
         <div className="flex-1 overflow-y-auto p-12 bg-[#fcfcfd] custom-scrollbar">
           <div className="max-w-7xl mx-auto space-y-12">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-ew-foreground mb-2">Select Products</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-ew-foreground mb-2">Select Products</h1>
               <p className="text-sm text-ew-muted-foreground font-medium">Select the products for your quote</p>
             </div>
 
             {PRODUCT_CATALOG.map((cat) => (
               <div key={cat.name} className="space-y-6">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-ew-muted-foreground/60">{cat.name}</h3>
+                <h3 className="text-xs font-black tracking-tight text-ew-muted-foreground/60">{cat.name}</h3>
                 <div className="grid grid-cols-3 gap-4">
                   {cat.products.map((prod) => (
                     <div 
@@ -367,7 +437,7 @@ const SelectProductsView = ({
                         <p className={cn("text-xs font-bold transition-colors", selectedIds.has(prod.id) ? "text-ew-foreground" : "text-ew-muted-foreground group-hover:text-ew-foreground")}>
                           {prod.name}
                         </p>
-                        <p className="text-[10px] text-ew-muted-foreground leading-snug font-medium opacity-60">
+                        <p className="text-xs text-ew-muted-foreground leading-snug font-medium opacity-60">
                           {prod.desc}
                         </p>
                       </div>
@@ -457,7 +527,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
         <header className="h-14 border-b border-ew-border bg-white px-6 flex items-center justify-between shrink-0 z-10">
-          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-ew-muted-foreground">
+          <div className="flex items-center gap-3 text-sm font-bold tracking-tight text-ew-muted-foreground">
             <LayoutGrid className="w-4 h-4" />
             <span>Opportunities</span>
             <ChevronRight className="w-3 h-3 opacity-30" />
@@ -466,7 +536,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
             <span className="text-ew-foreground">{quoteName}</span>
           </div>
           <div className="flex items-center gap-3">
-             <div className="flex items-center gap-4 mr-4 text-[10px] font-bold text-ew-muted-foreground uppercase tracking-widest">
+             <div className="flex items-center gap-4 mr-4 text-xs font-bold text-ew-muted-foreground tracking-tight">
                 <Badge color="gray">Draft</Badge>
              </div>
             <Button color="white" icon="info" label="Info" onClick={() => {}} />
@@ -478,7 +548,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
         </header>
 
         {/* Wizard Progress */}
-        <div className="bg-white border-b border-ew-border px-8 py-3 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
+        <div className="bg-white border-b border-ew-border px-8 py-3 flex items-center gap-4 text-xs font-bold tracking-tight">
            <span className="text-ew-muted-foreground cursor-pointer hover:text-ew-primary" onClick={onBack}>Quote Configuration</span>
            <ChevronRight className="w-3 h-3 text-ew-muted-foreground opacity-30" />
            <span className="text-ew-muted-foreground cursor-pointer hover:text-ew-primary" onClick={onSelectProducts}>Select Products</span>
@@ -491,123 +561,71 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
           <div className="max-w-[1600px] mx-auto space-y-8">
             
             {/* AI Intelligence Recap Header */}
-            <div className="bg-white border border-blue-200 rounded-[32px] overflow-hidden shadow-[0_2px_20px_rgba(59,130,246,0.08)]">
+            <div className="bg-white border border-[#b2a593] rounded-[32px] overflow-hidden shadow-[0_2px_20px_rgba(150,142,132,0.12)]">
                {/* Header strip */}
                <button
                  onClick={() => setIsRecapExpanded(v => !v)}
-                 className="w-full px-10 py-6 border-b border-blue-100 flex items-center justify-between bg-white hover:bg-ew-muted/20 transition-colors text-left"
+                 className="w-full px-10 py-6 border-b border-[#968e84]/30 flex items-center justify-between bg-white hover:bg-ew-muted/20 transition-colors text-left"
                >
                  <div className="flex items-center gap-3">
                    <Sparkles className="w-4 h-4 text-black" />
-                   <span className="text-[10px] font-black uppercase tracking-[0.25em] text-black">Quote Intelligence Recap</span>
+                   <span className="text-xs font-black tracking-tight text-black">Quote Intelligence Recap</span>
                  </div>
                  <div className="flex items-center gap-4">
-                   <span className="text-[10px] font-black text-ew-muted-foreground/50 uppercase tracking-widest">Confidence</span>
+                   <span className="text-xs font-black text-ew-muted-foreground/50 tracking-tight">Confidence</span>
                    <Badge color="darkGreen">High</Badge>
                    <ChevronDown className={cn("w-4 h-4 text-ew-muted-foreground transition-transform duration-300", isRecapExpanded ? "rotate-0" : "-rotate-90")} />
                  </div>
                </button>
 
                <div className={cn("overflow-hidden transition-all duration-300", isRecapExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0")}>
-               <div className="p-10 grid grid-cols-3 gap-12 relative">
+               <div className="relative grid grid-cols-3 gap-12 p-10">
                   {/* Visual Divider Lines */}
                   <div className="absolute top-10 bottom-10 left-1/3 w-px bg-ew-border/30" />
                   <div className="absolute top-10 bottom-10 left-2/3 w-px bg-ew-border/30" />
 
-                  {/* Column 1: Scope & Selection */}
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="text-[10px] font-black text-ew-muted-foreground uppercase tracking-widest mb-4">Derived Scope</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {['Auth', 'Identity', 'Balance'].map(p => (
-                          <span key={p} className="px-3 py-1.5 bg-ew-muted border border-ew-border rounded-xl text-xs font-bold text-ew-foreground">{p}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <p className="text-[11px] text-ew-muted-foreground leading-relaxed italic">
-                        "Confirmed need for bank account linking and verification across 10/08/2025 and 10/15/2025 calls."
-                      </p>
-                      <div className="flex items-center gap-2 text-[9px] font-black text-ew-primary uppercase tracking-widest">
-                        <Monitor className="w-3 h-3" />
-                        <span>Source: 2 Call Transcripts</span>
-                      </div>
-                    </div>
+                  {/* Column 1: Evidence */}
+                  <div className="min-w-0 space-y-4">
+                    <h4 className="mb-1 text-xs font-black tracking-tight text-ew-muted-foreground">
+                      Evidence
+                    </h4>
+                    <ul className="list-none space-y-3">
+                      {[
+                        '[10/15/2025 Call]: Agreed to a $1,000/month platform fee and a discounted unit rate of $2 per account for Auth, Identity, and Balance.',
+                        '[10/15/2025 Call]: Initial volume projection of 750 accounts/month for Q1/Q2.',
+                        '[10/08/2025 Call]: Customer confirmed need for Auth, Identity, and Balance for bank account linking.',
+                      ].map((item, i) => (
+                        <li
+                          key={i}
+                          className="relative pl-3 text-xs leading-relaxed text-ew-muted-foreground/90 before:absolute before:left-0 before:top-2 before:h-1 before:w-1 before:rounded-full before:bg-ew-border"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
-                  {/* Column 2: Pricing Logic */}
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="text-[10px] font-black text-ew-muted-foreground uppercase tracking-widest mb-4">Pricing Strategy</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-black text-ew-foreground tracking-tighter">$2.00</span>
-                          <span className="text-[10px] font-bold text-ew-muted-foreground uppercase">/ Bundled Rate</span>
-                        </div>
-                        <p className="text-[11px] text-ew-muted-foreground leading-relaxed">
-                          Applied a <span className="text-ew-foreground font-bold">55% discount</span> against List to match account-level expectations discussed in Discovery.
-                        </p>
-                      </div>
-                    </div>
+                  {/* Column 2: Benchmark */}
+                  <div className="min-w-0 space-y-4">
+                    <h4 className="mb-1 text-xs font-black tracking-tight text-ew-muted-foreground">
+                      Benchmark
+                    </h4>
+                    <p className="text-xs leading-relaxed text-ew-muted-foreground/90">
+                      Binaxity Holdings Inc. ($54K): Auth, Identity, Balance, and Platform Support Services were included,
+                      providing a general pricing structure.
+                    </p>
                   </div>
 
-                  {/* Column 3: Commitment & ACV */}
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="text-[10px] font-black text-ew-muted-foreground uppercase tracking-widest mb-4">Commitment Model</h4>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-brand-accent-gold/5 border border-brand-accent-gold/20 rounded-2xl">
-                           <div className="flex flex-col">
-                             <span className="text-[9px] font-black text-brand-accent-gold uppercase tracking-widest">Factor</span>
-                             <span className="text-xl font-black text-ew-foreground tracking-tighter">0.6x</span>
-                           </div>
-                           <div className="text-right flex flex-col">
-                             <span className="text-[9px] font-black text-brand-accent-gold uppercase tracking-widest">Usage Commitment</span>
-                             <span className="text-xl font-black text-ew-foreground tracking-tighter">$1,000/mo</span>
-                           </div>
-                        </div>
-                        <p className="text-[11px] text-ew-muted-foreground leading-relaxed">
-                          Projected <span className="font-bold text-ew-foreground">750 users/mo</span> commitment provides $12K annual baseline revenue.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-               </div>
-
-               {/* Detailed Intelligence Breakdown */}
-               <div className="px-10 pb-10 border-t border-ew-border/50 pt-10">
-                  <div className="grid grid-cols-1 gap-8">
-                     <div className="space-y-6">
-                        <div className="grid grid-cols-[120px_1fr] gap-8">
-                           <span className="text-[10px] font-black text-ew-muted-foreground uppercase tracking-widest pt-1">Evidence</span>
-                           <div className="space-y-3">
-                              {[
-                                '[10/15/2025 Call]: Agreed to a $1,000/month platform fee and a discounted unit rate of $2 per account for Auth, Identity, and Balance.',
-                                '[10/15/2025 Call]: Initial volume projection of 750 accounts/month for Q1/Q2.',
-                                '[10/08/2025 Call]: Customer confirmed need for Auth, Identity, and Balance for bank account linking.'
-                              ].map((item, i) => (
-                                <div key={i} className="text-xs text-ew-muted-foreground/80 leading-relaxed">
-                                   
-                                   {item}
-                                </div>
-                              ))}
-                           </div>
-                        </div>
-
-                        <div className="grid grid-cols-[120px_1fr] gap-8 border-t border-ew-border/30 pt-6">
-                           <span className="text-[10px] font-black text-ew-muted-foreground uppercase tracking-widest pt-1">Benchmark</span>
-                           <p className="text-xs text-ew-muted-foreground/80 leading-relaxed">
-                              Binaxity Holdings Inc. ($54K): Auth, Identity, Balance, and Platform Support Services were included, providing a general pricing structure.
-                           </p>
-                        </div>
-
-                        <div className="grid grid-cols-[120px_1fr] gap-8 border-t border-ew-border/30 pt-6">
-                           <span className="text-[10px] font-black text-ew-muted-foreground uppercase tracking-widest pt-1">Strategy</span>
-                           <p className="text-xs text-ew-muted-foreground/80 leading-relaxed">
-                              Applied 0.6 pre-commitment factor: $2,000/month Qualified ACV - $1,000/month platform fee = $1,000/month usage commitment. Usage products quoted at $1,000 / 0.6 = $1,666.67/month total, distributed across Auth, Identity, and Balance at a $2/account bundled rate.
-                           </p>
-                        </div>
-                     </div>
+                  {/* Column 3: Strategy */}
+                  <div className="min-w-0 space-y-4">
+                    <h4 className="mb-1 text-xs font-black tracking-tight text-ew-muted-foreground">
+                      Strategy
+                    </h4>
+                    <p className="text-xs leading-relaxed text-ew-muted-foreground/90">
+                      Applied 0.6 pre-commitment factor: $2,000/month Qualified ACV - $1,000/month platform fee =
+                      $1,000/month usage commitment. Usage products quoted at $1,000 / 0.6 = $1,666.67/month total,
+                      distributed across Auth, Identity, and Balance at a $2/account bundled rate.
+                    </p>
                   </div>
                </div>
                </div>{/* end collapsible */}
@@ -616,24 +634,24 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
             {/* Config Bar */}
             <div className="grid grid-cols-2 gap-8">
                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-ew-muted-foreground uppercase tracking-widest">Start Date</label>
+                  <label className="text-xs font-black text-ew-muted-foreground tracking-tight">Start Date</label>
                   <div className="w-full h-11 bg-white border border-ew-border rounded-xl px-4 flex items-center justify-between text-sm font-bold">
                      <span>04/26/2026</span>
                      <Calendar className="w-4 h-4 text-ew-muted-foreground opacity-40" />
                   </div>
                </div>
                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-ew-muted-foreground uppercase tracking-widest">Subscription Terms</label>
+                  <label className="text-xs font-black text-ew-muted-foreground tracking-tight">Subscription Terms</label>
                   <div className="w-full h-11 bg-white border border-ew-border rounded-xl px-4 flex items-center justify-between text-sm font-bold">
                      <span>12</span>
-                     <span className="text-xs text-ew-muted-foreground font-medium uppercase tracking-widest">Months</span>
+                     <span className="text-xs text-ew-muted-foreground font-medium tracking-tight">Months</span>
                   </div>
                </div>
             </div>
 
             {/* Pricing Table */}
             <div className="bg-white border border-ew-border rounded-2xl overflow-hidden shadow-sm">
-               <div className="p-4 bg-ew-muted/20 border-b border-ew-border grid grid-cols-[1fr_120px_100px_100px_120px_100px_100px_140px_40px] text-[9px] font-black text-ew-muted-foreground uppercase tracking-widest gap-4 items-center">
+               <div className="p-4 bg-ew-muted/20 border-b border-ew-border grid grid-cols-[1fr_120px_100px_100px_120px_100px_100px_140px_40px] text-xs font-black text-ew-muted-foreground tracking-tight gap-4 items-center">
                   <span>Products</span>
                   <span className="text-center">Volume</span>
                   <span className="text-right">List Price</span>
@@ -683,14 +701,14 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
             {/* Toggle Row */}
             <div className="flex items-center gap-4 pl-4">
                <Toggle enabled={usageMinimum} onToggle={setUsageMinimum} size="small" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-ew-muted-foreground opacity-80">Monthly usage minimum</span>
+               <span className="text-xs font-black tracking-tight text-ew-muted-foreground opacity-80">Monthly usage minimum</span>
             </div>
 
             {/* Lower Grid: Breakdown and Chart */}
             <div className="grid grid-cols-[1fr_480px] gap-8 pb-32">
                {/* Left: Commit Comparison */}
                <div className="bg-white border border-ew-border rounded-2xl overflow-hidden shadow-sm flex flex-col">
-                  <div className="p-4 border-b border-ew-border grid grid-cols-[1fr_160px_160px] text-[9px] font-black text-ew-muted-foreground uppercase tracking-widest gap-4">
+                  <div className="p-4 border-b border-ew-border grid grid-cols-[1fr_160px_160px] text-xs font-black text-ew-muted-foreground tracking-tight gap-4">
                      <span>Product</span>
                      <span className="text-right">No Commitment</span>
                      <span className="text-right">With Commitment</span>
@@ -703,9 +721,9 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                        { name: 'Platform Support Services - Basic', no: '$2,000.00', with: '$1,000.00' }
                      ].map((row, i) => (
                        <div key={i} className="p-4 grid grid-cols-[1fr_160px_160px] gap-4 items-center">
-                          <span className="text-[11px] font-bold text-ew-muted-foreground">{row.name}</span>
-                          <span className="text-[11px] font-bold text-ew-foreground text-right font-mono opacity-60">{row.no}</span>
-                          <span className="text-[11px] font-black text-ew-foreground text-right font-mono">{row.with}</span>
+                          <span className="text-sm font-bold text-ew-muted-foreground">{row.name}</span>
+                          <span className="text-sm font-bold text-ew-foreground text-right font-mono opacity-60">{row.no}</span>
+                          <span className="text-sm font-black text-ew-foreground text-right font-mono">{row.with}</span>
                        </div>
                      ))}
                   </div>
@@ -716,7 +734,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                   <div className="flex-1">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} />
+                        <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} fontWeight="bold" axisLine={false} tickLine={false} />
                         <RechartsTooltip
                           cursor={{ fill: '#f8fafc' }}
                           contentStyle={{
@@ -738,11 +756,11 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                   <div className="flex items-center justify-center gap-8 mt-6">
                      <div className="flex items-center gap-3">
                         <div className="w-3 h-3 bg-ew-primary rounded-full" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-ew-muted-foreground">Total</span>
+                        <span className="text-xs font-black tracking-tight text-ew-muted-foreground">Total</span>
                      </div>
                      <div className="flex items-center gap-3">
                         <div className="w-3 h-3 bg-[#006644] rounded-sm opacity-30" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-ew-muted-foreground">Savings</span>
+                        <span className="text-xs font-black tracking-tight text-ew-muted-foreground">Savings</span>
                      </div>
                   </div>
                </div>
@@ -755,11 +773,11 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
         <footer className="h-24 bg-white border-t border-ew-border flex items-center justify-between px-12 shrink-0 z-20">
           <div className="flex flex-col">
             <div className="flex items-baseline gap-2">
-               <span className="text-[10px] font-black text-ew-muted-foreground uppercase tracking-widest">Total Contract Value</span>
+               <span className="text-xs font-black text-ew-muted-foreground tracking-tight">Total Contract Value</span>
                <span className="text-2xl font-black text-ew-foreground tracking-tighter">$32,091.96</span>
             </div>
             <div className="flex items-baseline gap-2 -mt-1">
-               <span className="text-[9px] font-bold text-ew-muted-foreground uppercase tracking-widest opacity-60">First Year Revenue</span>
+               <span className="text-xs font-bold text-ew-muted-foreground tracking-tight opacity-60">First Year Revenue</span>
                <span className="text-sm font-black text-ew-foreground tracking-tight opacity-70">$32,091.96</span>
             </div>
           </div>
@@ -778,27 +796,39 @@ export default function App() {
   const [processStep, setProcessStep] = useState<number>(-1);
   const [currentView, setCurrentView] = useState<'dashboard' | 'select-products' | 'pricing-options'>('dashboard');
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
-  const [quoteName, setQuoteName] = useState('AI Quote - Al Mabrook - ABI');
+  const [quoteName, setQuoteName] = useState('AI Quote');
   const [quotes, setQuotes] = useState<Quote[]>(INITIAL_QUOTES);
-  
+  const [opportunityContextNotes, setOpportunityContextNotes] = useState('AI quoting testing');
+  const [quoteCreateMenuOpen, setQuoteCreateMenuOpen] = useState(false);
+  const quoteCreateMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!quoteCreateMenuOpen) return;
+    const close = (e: MouseEvent) => {
+      if (quoteCreateMenuRef.current && !quoteCreateMenuRef.current.contains(e.target as Node)) {
+        setQuoteCreateMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [quoteCreateMenuOpen]);
+
   const steps: Step[] = [
-    { id: 'context', label: 'Context', status: 'pending', logos: ['https://storage.googleapis.com/context-builder-v2-input-artifacts/amy%40dealops.com/images/salesforce_logo_17.png'] },
-    { id: 'similar', label: 'Accounts', status: 'pending', logos: ['https://storage.googleapis.com/context-builder-v2-input-artifacts/amy%40dealops.com/images/salesforce_logo_17.png', 'https://storage.googleapis.com/context-builder-v2-input-artifacts/amy%40dealops.com/images/gong_logo_18.png'] },
-    { id: 'historical', label: 'Deals', status: 'pending', logos: ['https://storage.googleapis.com/context-builder-v2-input-artifacts/amy%40dealops.com/images/salesforce_logo_17.png'] },
+    { id: 'context', label: 'Context', status: 'pending', logos: [LOGO_SALESFORCE, LOGO_GONG] },
+    { id: 'similar', label: 'Accounts', status: 'pending', logos: [LOGO_SALESFORCE, LOGO_GONG] },
+    { id: 'historical', label: 'Deals', status: 'pending', logos: [LOGO_SALESFORCE] },
     { id: 'recommend', label: 'Recommend', status: 'pending' },
-    { id: 'mapping', label: 'Mapping', status: 'pending' },
-    { id: 'quote', label: 'Quote', status: 'pending' },
+    { id: 'quote', label: 'Quote Ready', status: 'pending' },
   ];
 
   useEffect(() => {
-    // Auto-progress stages from 0 to 4 (Context to Mapping)
-    // We stop at 4 to allow the user to review the intelligence gathered
+    // Auto-progress stages 0–3 (Context → Recommend), then stop on Quote for review
     if (isCopilotOpen && processStep >= 0 && processStep < 4) {
       const timer = setTimeout(() => {
         setProcessStep(prev => prev + 1);
       }, 4000); // 4s delay for better readability
       
-      // Automatic selection when reaching mapping step
+      // Automatic selection before final review step
       if (processStep === 3) {
         setSelectedProductIds(new Set(['identity', 'auth', 'balance', 'platform-basic']));
       }
@@ -868,7 +898,7 @@ export default function App() {
 
         {/* Navigation */}
         <header className="h-14 border-b border-ew-border bg-white/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-10">
-          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-ew-muted-foreground">
+          <div className="flex items-center gap-3 text-sm font-bold tracking-tight text-ew-muted-foreground">
             <LayoutGrid className="w-4 h-4" />
             <span>Opportunities</span>
             <ChevronRight className="w-3 h-3 opacity-30" />
@@ -887,37 +917,71 @@ export default function App() {
         <div className="flex-1 overflow-y-auto p-8 max-w-5xl mx-auto w-full z-0">
           <div className="flex items-end justify-between mb-10">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-brand-accent-gold mb-2 block">Enterprise Opportunity</span>
-              <h1 className="text-4xl font-light tracking-tight text-ew-foreground">Al Mabrook - ABI</h1>
+              <span className="text-xs font-bold tracking-tight text-brand-accent-gold mb-2 block">Enterprise Opportunity</span>
+              <h1 className="text-2xl font-light tracking-tight text-ew-foreground">Al Mabrook - ABI</h1>
             </div>
             <div className="flex items-center gap-3">
               <Button color="white" label="Proposal package" onClick={() => {}} />
-              <Button color="primary" label="Create a quote" onClick={() => setCurrentView('select-products')} />
+              <div className="relative" ref={quoteCreateMenuRef}>
+              <button
+                type="button"
+                onClick={() => setQuoteCreateMenuOpen((o) => !o)}
+                aria-expanded={quoteCreateMenuOpen}
+                aria-haspopup="menu"
+                className={cn(
+                  'flex items-center gap-2 rounded-lg border border-ew-primary bg-ew-primary px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-ew-primary/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ew-primary'
+                )}
+              >
+                <Plus className="h-4 w-4 shrink-0" />
+                <span>Create a quote</span>
+                <ChevronDown
+                  className={cn('h-4 w-4 shrink-0 opacity-90 transition-transform', quoteCreateMenuOpen && 'rotate-180')}
+                />
+              </button>
+              {quoteCreateMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+6px)] z-30 min-w-[260px] overflow-hidden rounded-xl border border-ew-border bg-white py-1 shadow-md shadow-black/5"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-ew-foreground transition-colors hover:bg-ew-background"
+                    onClick={() => {
+                      setCurrentView('select-products');
+                      setQuoteCreateMenuOpen(false);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 shrink-0 text-ew-muted-foreground" />
+                    Create from scratch
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-ew-foreground transition-colors hover:bg-ew-background"
+                    onClick={() => setQuoteCreateMenuOpen(false)}
+                  >
+                    <Copy className="h-4 w-4 shrink-0 text-ew-muted-foreground" />
+                    Clone existing
+                  </button>
+                  <div className="my-1 h-px bg-ew-border/80" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-ew-foreground transition-colors hover:bg-ew-background"
+                    onClick={() => {
+                      handleGenerate();
+                      setQuoteCreateMenuOpen(false);
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4 shrink-0 text-brand-accent-gold" />
+                    Run Quote Intelligence
+                  </button>
+                </div>
+              )}
+              </div>
             </div>
           </div>
-
-          {/* Intelligence Hero Banner */}
-          {!isCopilotOpen && processStep === -1 && (
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-12 p-8 bg-ew-primary rounded-[32px] text-white flex items-center justify-between shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] relative overflow-hidden group"
-            >
-              <div className="absolute inset-0 bg-brand-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <div className="flex items-center gap-8 relative z-10">
-                <div>
-                  <h3 className="text-xl font-bold tracking-tight mb-1">Portfolio Intelligence Engine</h3>
-                  <p className="text-sm text-white/50 font-medium max-w-lg">Using AI to analyze historical deals, benchmark similar accounts, and draft optimized product configurations.</p>
-                </div>
-              </div>
-              <Button
-                color="accent"
-                label="Run Quote Intelligence"
-                onClick={handleGenerate}
-                className="rounded-2xl text-sm font-medium px-8 py-4"
-              />
-            </motion.div>
-          )}
 
           <div className="flex items-center gap-3 mb-6">
             <p className="text-sm text-ew-foreground font-medium">Proposal Feb 03, 2026, 03:10 PM</p>
@@ -947,7 +1011,7 @@ export default function App() {
           </div>
 
           <div className="border-t border-ew-border pt-10">
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.25em] text-ew-muted-foreground mb-8 font-sans">Standalone Quotes</h2>
+            <h2 className="mb-8 font-sans text-sm font-bold tracking-tight text-ew-muted-foreground">Standalone Quotes</h2>
             <div className="space-y-4">
               {quotes.map(quote => (
                  <QuoteCard 
@@ -964,40 +1028,75 @@ export default function App() {
         </div>
       </main>
 
-      {/* Right Information Context - Standard Sidebar */}
-      <aside className={cn(
-        "w-85 border-l border-ew-border bg-ew-card p-8 shrink-0 transition-all duration-300 overflow-y-auto",
-        isCopilotOpen ? "opacity-0 invisible w-0 p-0 overflow-hidden" : "opacity-100 visible"
-      )}>
-        <div className="mb-10">
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-accent-gold mb-5">Opportunity Context</h3>
-          <div className="bg-ew-muted/30 border border-ew-border/50 rounded-xl p-4 text-xs text-ew-muted-foreground leading-relaxed min-h-[120px]">
-            AI quoting testing
-          </div>
-          <div className="text-right text-[10px] text-ew-muted-foreground/50 mt-2 font-mono tracking-widest">18/400</div>
-        </div>
+      {/* Right Information Context — DealOps-style panels */}
+      <aside
+        className={cn(
+          'w-85 shrink-0 overflow-y-auto border-l border-ew-border bg-ew-muted/50 px-4 py-5 transition-all duration-300 custom-scrollbar',
+          isCopilotOpen ? 'invisible w-0 overflow-hidden border-0 p-0 opacity-0' : 'visible opacity-100',
+        )}
+      >
+        <div className="flex flex-col gap-4">
+          <section className="rounded-lg border border-ew-border bg-white p-4">
+            <h3 className="border-b border-ew-border pb-3 text-sm font-bold tracking-tight text-ew-foreground">
+              Opportunity context
+            </h3>
+            <div className="pt-3">
+              <textarea
+                value={opportunityContextNotes}
+                onChange={(e) => setOpportunityContextNotes(e.target.value.slice(0, 400))}
+                maxLength={400}
+                rows={5}
+                spellCheck
+                className="min-h-[100px] w-full resize-y border-0 bg-transparent text-sm leading-relaxed text-ew-foreground placeholder:text-ew-muted-foreground/60 focus:outline-none"
+                placeholder="Add context for this opportunity…"
+                aria-label="Opportunity context notes"
+              />
+              <p className="mt-2 text-right text-xs tabular-nums text-ew-muted-foreground">
+                {opportunityContextNotes.length}/400
+              </p>
+            </div>
+          </section>
 
-        <div>
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-ew-muted-foreground mb-8">Overview</h3>
-          <div className="space-y-5">
-            {Object.entries(OPPORTUNITY_DATA).map(([key, value]) => (
-              <div key={key} className="flex justify-between items-baseline gap-4 border-b border-ew-border/30 pb-2">
-                <span className="text-[9px] font-bold text-ew-muted-foreground uppercase tracking-widest">{key.replace(/([A-Z])/g, ' $1')}</span>
-                <span className="text-xs font-semibold text-ew-foreground text-right">{value}</span>
+          <section className="flex flex-col rounded-lg border border-ew-border bg-white p-4">
+            <h3 className="border-b border-ew-border pb-3 text-sm font-bold tracking-tight text-ew-foreground">
+              Overview
+            </h3>
+            <div className="divide-y divide-ew-border/80 pt-1">
+              {OPPORTUNITY_OVERVIEW_ROWS.map(({ key, label }) => {
+                const raw = OPPORTUNITY_DATA[key];
+                const display =
+                  key === 'acv' ? `$${raw}` : typeof raw === 'number' ? String(raw) : raw;
+                return (
+                  <div key={key} className="flex items-baseline justify-between gap-6 py-2.5">
+                    <span className="shrink-0 text-sm font-bold tracking-tight text-ew-muted-foreground">
+                      {label}
+                    </span>
+                    <span className="min-w-0 text-right text-sm font-normal text-ew-foreground">{display}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 border-t border-ew-border pt-4">
+              <div className="flex gap-2">
+                <Button
+                  color="white"
+                  className="flex-1 justify-center rounded-lg border-ew-border py-2.5 text-sm font-semibold text-ew-foreground shadow-none"
+                  onClick={() => {}}
+                >
+                  <RefreshCw className="h-4 w-4 shrink-0" />
+                  <span>Refresh data</span>
+                </Button>
+                <Button
+                  color="white"
+                  className="flex-1 justify-center rounded-lg border-ew-border py-2.5 text-sm font-semibold text-ew-foreground shadow-none"
+                  onClick={() => {}}
+                >
+                  <ExternalLink className="h-4 w-4 shrink-0" />
+                  <span>Open in SFDC</span>
+                </Button>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-16 flex flex-col gap-3">
-          <Button color="white" className="w-full justify-center" onClick={() => {}}>
-            <RefreshCw className="w-4 h-4" />
-            <span>Refresh data</span>
-          </Button>
-          <Button color="white" className="w-full justify-center" onClick={() => {}}>
-            <ExternalLink className="w-4 h-4" />
-            <span>Open in SFDC</span>
-          </Button>
+            </div>
+          </section>
         </div>
       </aside>
 
@@ -1017,29 +1116,26 @@ export default function App() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-6xl h-full max-h-[90vh] bg-white border border-ew-border shadow-2xl flex flex-col rounded-[32px] overflow-hidden"
+              className="relative flex h-full max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-ew-border bg-white shadow-md"
             >
               {/* Copilot Header */}
-              <div className="px-10 py-5 border-b border-ew-border flex items-center justify-between sticky top-0 z-10 bg-white/80 backdrop-blur-xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ew-border bg-white/80 px-6 py-3.5 backdrop-blur-xl">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-ew-primary rounded-xl flex items-center justify-center shadow-lg shadow-black/5">
-                    <Zap className="w-5 h-5 text-ew-primary-foreground fill-current" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-ew-border bg-white shadow-sm">
+                    <img
+                      src="/dealops-symbol.png"
+                      alt="DealOps"
+                      className="h-6 w-6 object-contain"
+                      width={24}
+                      height={24}
+                    />
                   </div>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-lg font-bold text-ew-foreground tracking-tight">Al Mabrook – ABI</h2>
-                      <Badge color="green" className="flex items-center gap-1.5 uppercase tracking-widest">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-                        Generating quote
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-ew-muted-foreground font-medium mt-0.5">
-                      <span>New Customer</span>
-                      <span className="w-1 h-1 rounded-full bg-ew-border" />
-                      <span>Fintech</span>
-                      <span className="w-1 h-1 rounded-full bg-ew-border" />
-                      <span>$24K ACV</span>
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-ew-foreground tracking-tight">Al Mabrook – ABI</h2>
+                    <Badge color="green" className="flex items-center gap-1.5 tracking-tight">
+                      <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+                      Generating quote
+                    </Badge>
                   </div>
                 </div>
                 
@@ -1053,36 +1149,57 @@ export default function App() {
               </div>
 
               {/* Horizontal Pipeline Step Rail */}
-              <div className="px-10 py-6 bg-ew-background/50 border-b border-ew-border">
-                <div className="flex items-center justify-center max-w-4xl mx-auto w-full">
-                  {steps.map((step, idx) => (
+              <div className="border-b border-ew-border bg-ew-background/50 px-5 py-3.5">
+                <div className="mx-auto flex w-full max-w-4xl items-center justify-center">
+                  {steps.map((step, idx) => {
+                    const isLastStep = idx === steps.length - 1;
+                    const stepComplete =
+                      processStep > idx || (processStep === idx && isLastStep);
+                    return (
                     <React.Fragment key={step.id}>
-                      <div className="flex items-center gap-3 group px-4">
-                        <div className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-500 shadow-sm grow-0 shrink-0",
-                          processStep > idx ? "bg-ew-primary text-ew-background" :
-                          processStep === idx ? "bg-brand-accent-gold text-ew-foreground ring-4 ring-brand-accent-gold/10 animate-pulse" :
-                          "bg-white border border-ew-border text-ew-muted-foreground"
-                        )}>
-                          {processStep > idx ? "✓" : idx + 1}
+                      <div className="group flex items-center gap-2 px-2">
+                        <div
+                          className={cn(
+                            'flex h-7 w-7 shrink-0 grow-0 items-center justify-center rounded-full text-xs font-bold shadow-sm transition-all duration-500',
+                            stepComplete
+                              ? 'bg-ew-primary text-ew-background'
+                              : processStep === idx
+                                ? 'bg-brand-accent-gold text-ew-foreground ring-4 ring-brand-accent-gold/10 animate-pulse'
+                                : 'border border-ew-border bg-white text-ew-muted-foreground',
+                          )}
+                        >
+                          {stepComplete ? '✓' : idx + 1}
                         </div>
 
                         {/* Stacking logos if present */}
                         {step.logos && step.logos.length > 0 && (
-                          <div className="flex -space-x-2 shrink-0">
+                          <div className="flex shrink-0 items-center gap-1" aria-label="Data sources">
                             {step.logos.map((logo, lIdx) => (
-                              <div key={lIdx} className="w-6 h-6 rounded-md bg-white border border-ew-border/50 flex items-center justify-center p-1 shadow-sm relative first:ml-0 -ml-2" style={{ zIndex: 10 - lIdx }}>
-                                <img src={logo} alt="logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                              <div
+                                key={lIdx}
+                                className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md border border-ew-border/50 bg-white p-0.5 shadow-sm"
+                              >
+                                <img
+                                  src={logo}
+                                  alt={logo.includes('gong') ? 'Gong' : 'Salesforce'}
+                                  className="h-full w-full object-contain"
+                                  loading="lazy"
+                                />
                               </div>
                             ))}
                           </div>
                         )}
 
-                        <span className={cn(
-                          "text-[10px] font-bold uppercase tracking-[0.1em] transition-colors duration-300 whitespace-nowrap",
-                          processStep === idx ? "text-ew-foreground" :
-                          processStep > idx ? "text-ew-primary" : "text-ew-muted-foreground"
-                        )}>
+                        <span
+                          className={cn(
+                            'whitespace-nowrap text-xs font-bold tracking-tight transition-colors duration-300',
+                            stepComplete
+                              ? 'text-ew-primary'
+                              : processStep === idx
+                                ? 'text-ew-foreground'
+                                : 'text-ew-muted-foreground',
+                          )}
+                        >
                           {step.label}
                         </span>
                       </div>
@@ -1093,144 +1210,125 @@ export default function App() {
                         )} />
                       )}
                     </React.Fragment>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Two Column Layout Context */}
-              <div className="flex-1 flex overflow-hidden">
-                {/* Left Column: Intelligence Stream */}
-                <div className="flex-1 overflow-y-auto p-12 space-y-8 custom-scrollbar border-r border-ew-border bg-white flex flex-col">
-                  
-                  {processStep >= 4 && (
-                    <div className="space-y-6 order-1">
-                       <div className="p-8 bg-white border border-ew-border/60 rounded-[32px] shadow-xl space-y-8 relative">
-                          <div className="text-center space-y-2">
-                             <div className="flex items-center justify-center gap-2 mb-1">
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-ew-muted-foreground/60">Analysis Complete</span>
-                             </div>
-                             <h3 className="text-xl font-bold tracking-tight text-ew-foreground">What do you want to do next?</h3>
-                          </div>
-                          
-                          <div className="space-y-4">
-                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-ew-muted-foreground/60 px-1">Quote Name</label>
-                                <Input
-                                   type="text"
-                                   value={quoteName}
-                                   onChange={(e) => setQuoteName(e.target.value)}
-                                   placeholder="Enter quote name..."
-                                   className="w-full font-bold text-ew-foreground"
-                                />
-                             </div>
-
-                             <Button
-                               color="primary"
-                               onClick={() => { setIsCopilotOpen(false); setCurrentView('pricing-options'); }}
-                               className="w-full justify-between rounded-2xl py-5 px-6 h-auto"
-                               textAlign="left"
-                             >
-                               <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                                   <ArrowRight className="w-5 h-5" />
-                                 </div>
-                                 <div className="text-left">
-                                   <p className="text-sm font-bold">Finalize & Create Quote</p>
-                                   <p className="text-[11px] font-medium opacity-60">Apply AI recommendations and view detailed pricing</p>
-                                 </div>
-                               </div>
-                               <ChevronRight className="w-4 h-4 opacity-40 shrink-0" />
-                             </Button>
-                          </div>
-                       </div>
-
-                       <div className="p-7 bg-white border border-ew-border/50 shadow-sm rounded-[32px]">
-                          <div className="flex items-center gap-3 mb-6">
-                            <div className="w-8 h-8 bg-ew-primary/10 rounded-lg flex items-center justify-center">
-                              <LayoutGrid className="w-4 h-4 text-ew-primary" />
-                            </div>
-                            <h3 className="text-xs font-black uppercase tracking-[0.25em] text-ew-foreground">Mapping Products</h3>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {['Auth', 'Identity', 'Balance', 'Platform Support', 'Income', 'Assets', 'Liabilities', 'Investments', 'Transactions', 'Recurring Transactions', 'Signal', 'Transfer', 'Employment', 'Statements', 'Sandbox'].map(item => (
-                              <div key={item} className="px-3 py-1.5 bg-ew-background/50 rounded-full border border-ew-border/30 flex items-center gap-2">
-                                 <div className="w-1.5 h-1.5 rounded-full bg-ew-primary/40" />
-                                 <span className="text-[10px] font-bold text-ew-foreground uppercase tracking-widest">{item}</span>
-                              </div>
-                            ))}
-                          </div>
-                       </div>
-                    </div>
-                  )}
-
-                  {processStep >= 3 && (
-                    <div className="order-2">
-                       <div className="flex items-center gap-3 mb-6">
-                          <div className="w-8 h-8 bg-brand-accent-gold/10 rounded-lg flex items-center justify-center">
-                            <Zap className="w-4 h-4 text-brand-accent-gold fill-current" />
-                          </div>
-                          <h3 className="text-xs font-black uppercase tracking-[0.25em] text-ew-foreground">AI recommendation</h3>
-                       </div>
-                       <div className="bg-white border border-ew-border/40 rounded-[32px] overflow-hidden shadow-sm divide-y divide-ew-border/30">
-                          {[
-                            { name: 'Auth', confidence: 'HIGH', price: '$0.67', units: '833 units', detail: 'Customer explicitly stated need for bank account verification (Auth) as part of a bundled rate in 10/15/2025 Call and 10/08/2025 Call.' },
-                            { name: 'Identity', confidence: 'HIGH', price: '$0.67', units: '833 units', detail: 'Customer explicitly stated need for Identity (matching account holder to user) as part of a bundled rate in 10/15/2025 Call and 10/08/2025 Call.' },
-                            { name: 'Balance', confidence: 'MEDIUM', price: '$0.08', units: '833 units', detail: 'Determined based on sub-vertical benchmark and Discovery Stage conversation regarding account linking.' }
-                          ].map((prod, i) => (
-                            <div key={i} className="p-5 hover:bg-ew-background transition-colors group">
-                               <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-3">
-                                     <h4 className="text-sm font-bold text-ew-foreground tracking-tight">{prod.name}</h4>
-                                     <Badge color={prod.confidence === 'HIGH' ? 'green' : 'yellow'} size="small">{prod.confidence}</Badge>
-                                  </div>
-                                  <div className="text-right">
-                                    <span className="text-sm font-black text-ew-foreground tracking-tighter">{prod.price}</span>
-                                    <span className="text-[9px] text-ew-muted-foreground ml-2 font-bold tracking-widest uppercase">/ {prod.units}</span>
-                                  </div>
-                               </div>
-                               <div className="text-[11px] text-ew-muted-foreground leading-relaxed pl-4 border-l border-ew-border/30 italic">
-                                  "{prod.detail}"
-                                </div>
-                            </div>
-                          ))}
-                       </div>
-                    </div>
-                  )}
-
+              {/* Main stream — full width (no side rail) */}
+              <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white p-7 custom-scrollbar md:p-8">
+                  <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
                   {processStep >= 2 && (
-                    <div className="order-3">
+                    <div className="order-2">
                       <IntelCard title="Analyzing Historical Deals" icon={History} isComplete={processStep > 2}>
                         <div className="space-y-4">
-                            <div className="p-6 bg-ew-background/50 border border-ew-border/50 rounded-2xl">
-                              <div className="flex items-center justify-between mb-5">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-white border border-ew-border rounded-lg flex items-center justify-center">
-                                      <FileText className="w-4 h-4 text-ew-primary" />
-                                    </div>
-                                    <h4 className="text-sm font-bold text-ew-foreground">Binaxity - Income, Assets, IDV</h4>
-                                  </div>
-                                  <div className="px-3 py-1 bg-white border border-ew-border/50 rounded-full text-[10px] font-bold text-ew-muted-foreground uppercase tracking-widest">
-                                    <span className="text-ew-primary font-black">$54K</span> • New
-                                  </div>
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-ew-border/50 bg-ew-background/30">
+                                <FileText className="h-4 w-4 text-ew-foreground" />
                               </div>
-                              <div className="space-y-3">
-                                  {[
-                                    { label: 'Platform Support Services - Basic', vol: '1 vol', price: '$2000.0000' },
-                                    { label: 'Auth', vol: '2,167 vol', price: '$1.3800' },
-                                    { label: 'Balance', vol: '2,167 vol', price: '$0.0920' },
-                                    { label: 'Identity', vol: '2,167 vol', price: '$1.3800' }
-                                  ].map((row, i) => (
-                                    <div key={i} className="flex justify-between items-center text-[11px] border-b border-ew-border/20 pb-2 last:border-0 last:pb-0">
-                                      <div className="flex flex-col">
-                                        <span className="text-ew-foreground font-medium">{row.label}</span>
-                                        <span className="text-[9px] text-ew-muted-foreground opacity-60 tracking-tighter">{row.vol}</span>
-                                      </div>
-                                      <span className={cn("font-bold font-mono tracking-tight", i === 0 ? "text-ew-primary" : "text-ew-foreground")}>{row.price}</span>
-                                    </div>
-                                  ))}
-                              </div>
+                              <h4 className="truncate text-sm font-semibold leading-tight text-ew-foreground">
+                                Benchmark: Income, Assets, IDV
+                              </h4>
                             </div>
+                            <div className="shrink-0 rounded-full border border-ew-border/40 bg-ew-background/30 px-3 py-1 text-xs font-medium tabular-nums text-ew-foreground sm:ml-auto">
+                              $54K <span className="text-ew-muted-foreground">·</span> New
+                            </div>
+                          </div>
+
+                          <div className="overflow-hidden rounded-lg border border-ew-border/30 bg-white">
+                            <div
+                              className={cn(
+                                'grid gap-x-5 border-b border-ew-border/30 bg-ew-background/20 px-3 py-2.5 text-xs font-medium tracking-tight text-ew-muted-foreground/90',
+                                processStep >= 3
+                                  ? 'grid-cols-[minmax(0,1fr)_6.5rem_17rem] sm:grid-cols-[minmax(0,1fr)_7.5rem_16rem]'
+                                  : 'grid-cols-[minmax(0,1fr)_6.5rem] sm:grid-cols-[minmax(0,1fr)_7.5rem]',
+                                'items-end',
+                              )}
+                            >
+                              <span className="min-w-0">Product</span>
+                              <span
+                                className={cn('text-right tabular-nums', processStep >= 3 && 'border-r border-ew-border/20 pr-4 sm:pr-5')}
+                              >
+                                Historical
+                              </span>
+                              {processStep >= 3 && (
+                                <motion.span
+                                  initial={{ opacity: 0, x: 4 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ duration: 0.18 }}
+                                  className="inline-flex items-center justify-end gap-1.5 text-right"
+                                >
+                                  <Zap className="h-3.5 w-3.5 shrink-0 fill-current text-black" aria-hidden />
+                                  Recommended
+                                </motion.span>
+                              )}
+                            </div>
+                            <div>
+                              {BENCHMARK_HISTORICAL_ROWS.map((row, i) => {
+                                const rec = RECOMMENDED_PRODUCT_BY_LABEL[row.label];
+                                const showRecColumn = processStep >= 3;
+                                return (
+                                  <div
+                                    key={row.label}
+                                    className={cn(
+                                      'grid items-start gap-x-5 border-b border-ew-border/25 px-3 py-3.5 last:border-b-0 odd:bg-ew-background/15',
+                                      showRecColumn
+                                        ? 'grid-cols-[minmax(0,1fr)_6.5rem_17rem] sm:grid-cols-[minmax(0,1fr)_7.5rem_16rem]'
+                                        : 'grid-cols-[minmax(0,1fr)_6.5rem] sm:grid-cols-[minmax(0,1fr)_7.5rem]',
+                                    )}
+                                  >
+                                    <div className="min-w-0 pr-1">
+                                      <p className="text-sm font-medium text-ew-foreground">{row.label}</p>
+                                      <p className="mt-0.5 text-xs font-medium text-ew-muted-foreground/85">{row.vol}</p>
+                                    </div>
+                                    <span
+                                      className={cn(
+                                        'pt-0.5 text-right text-sm font-medium tabular-nums text-ew-foreground',
+                                        showRecColumn && 'border-r border-ew-border/20 pr-4 sm:pr-5',
+                                      )}
+                                    >
+                                      {row.price}
+                                    </span>
+                                    {showRecColumn && (
+                                      <motion.div
+                                        key={`rec-${row.label}`}
+                                        initial={{ opacity: 0, y: 3 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.2, delay: i * 0.03 }}
+                                        className="min-w-0 pl-0.5 text-right"
+                                      >
+                                        {rec ? (
+                                          <div className="flex flex-col items-stretch gap-2 sm:items-end sm:text-right">
+                                            <div className="inline-flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
+                                              <Badge color={rec.confidence === 'HIGH' ? 'green' : 'yellow'} size="small">
+                                                {toSentenceCase(rec.confidence)}
+                                              </Badge>
+                                              <span className="whitespace-nowrap text-sm font-medium tabular-nums text-ew-foreground">
+                                                {rec.price}
+                                              </span>
+                                              <span className="text-xs font-medium tabular-nums text-ew-muted-foreground/90">
+                                                / {rec.units}
+                                              </span>
+                                            </div>
+                                            <p className="max-w-[20rem] text-left text-xs font-normal leading-snug text-ew-muted-foreground/90 sm:text-right">
+                                              {rec.detail}
+                                            </p>
+                                          </div>
+                                        ) : (
+                                          <div className="flex flex-col items-end gap-0.5">
+                                            <span className="text-sm tabular-nums text-ew-muted-foreground/40 sm:text-right">—</span>
+                                            <span className="text-xs text-ew-muted-foreground/70">No change</span>
+                                          </div>
+                                        )}
+                                      </motion.div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       </IntelCard>
                     </div>
@@ -1239,31 +1337,38 @@ export default function App() {
                   {processStep >= 1 && (
                     <div className="order-4">
                       <IntelCard title="3 similar accounts found" icon={Database} isComplete={processStep > 1} subtitle="3.2s">
-                        <p className="text-[11px] text-ew-muted-foreground mb-5 opacity-80">Matched on vertical (Fintech), subvertical (Alternative Investments), deal size ($20K–30K range).</p>
-                        <div className="w-full">
-                          <div className="grid grid-cols-[1fr_60px_160px_80px] text-[9px] font-bold uppercase tracking-widest text-ew-muted-foreground/60 mb-3 px-2">
-                            <span>Account</span>
-                            <span>ACV</span>
-                            <span>Products</span>
-                            <span className="text-right">Match</span>
-                          </div>
-                          <div className="space-y-2">
-                            {[
-                              { name: 'Binaxity Holdings', acv: '$54K', prods: 'Auth, Identity, Balance, Platform', match: 95 },
-                              { name: 'NovaPay Labs', acv: '$31K', prods: 'Auth, Balance, Identity', match: 88 },
-                              { name: 'Meridian Fintech', acv: '$22K', prods: 'Auth, Identity', match: 74 }
-                            ].map((row, i) => (
-                              <div key={i} className="grid grid-cols-[1fr_60px_160px_80px] items-center p-4 bg-ew-background/40 hover:bg-ew-background rounded-xl border border-ew-border/30 hover:border-ew-border/80 transition-all text-xs">
-                                <span className="font-bold text-ew-foreground">{row.name}</span>
-                                <span className="text-ew-muted-foreground font-medium">{row.acv}</span>
-                                <span className="text-ew-muted-foreground text-[10px] opacity-70">{row.prods}</span>
-                                <div className="flex items-center gap-2 justify-end">
-                                  <div className="w-12 h-1 bg-ew-border/40 rounded-full overflow-hidden">
-                                    <div className="h-full bg-ew-primary shadow-[0_0_8px_rgba(0,0,0,0.2)]" style={{ width: `${row.match}%` }} />
-                                  </div>
+                        <div className="space-y-4">
+                          <p className="text-xs font-medium leading-relaxed tracking-tight text-ew-muted-foreground/90">
+                            Ranked by fit to this opportunity’s size band ($20K–$30K) and product footprint.
+                          </p>
+                          <div className="w-full">
+                            <div className="mb-0 grid grid-cols-[1fr_56px_1fr_80px] gap-x-3 text-xs font-medium tracking-tight text-ew-muted-foreground/90 min-[480px]:grid-cols-[1fr_60px_160px_80px] min-[480px]:gap-x-4">
+                              <span>Account</span>
+                              <span>ACV</span>
+                              <span>Products</span>
+                              <span className="text-right">Match</span>
+                            </div>
+                            <div className="mt-2 divide-y divide-ew-border/30">
+                              {[
+                                { name: 'Binaxity Holdings', acv: '$54K', prods: 'Auth, Identity, Balance, Platform', match: 95 },
+                                { name: 'NovaPay Labs', acv: '$31K', prods: 'Auth, Balance, Identity', match: 88 },
+                                { name: 'Meridian Fintech', acv: '$22K', prods: 'Auth, Identity', match: 74 },
+                              ].map((row, i) => (
+                                <div
+                                  key={i}
+                                  className="grid grid-cols-[1fr_56px_1fr_80px] items-center gap-x-3 py-3 text-sm min-[480px]:grid-cols-[1fr_60px_160px_80px] min-[480px]:gap-x-4"
+                                >
+                                  <span className="min-w-0 font-medium text-ew-foreground">{row.name}</span>
+                                  <span className="tabular-nums font-medium text-ew-foreground">{row.acv}</span>
+                                  <span className="min-w-0 text-xs font-medium text-ew-muted-foreground/90">
+                                    {row.prods}
+                                  </span>
+                                  <span className="text-right text-sm font-medium tabular-nums text-ew-foreground">
+                                    {row.match}%
+                                  </span>
                                 </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </IntelCard>
@@ -1272,59 +1377,97 @@ export default function App() {
 
                   {processStep >= 0 && (
                     <div className="order-5">
-                      <IntelCard title="Opportunity context loaded" icon={Monitor} isComplete={processStep > 0} subtitle="1.3s">
+                      <IntelCard
+                        title="Opportunity context loaded"
+                        icon={Monitor}
+                        isComplete={processStep > 0}
+                        subtitle="1.3s"
+                      >
                         <div className="space-y-4">
-                          <div>
-                            <p className="text-sm font-bold text-ew-foreground">Al Mabrook – ABI <span className="font-normal text-ew-muted-foreground px-2 opacity-50">|</span> <span className="font-normal text-ew-muted-foreground text-xs uppercase tracking-wider">Fintech / Alternative Investments • SMB • USA</span></p>
-                            <p className="text-xs text-ew-muted-foreground mt-2 font-medium tracking-tight">Qualified ACV $24,000 • 9 employees • Discovery stage</p>
-                            <p className="text-xs text-ew-muted-foreground opacity-80">Platform fee: $1,000/mo • Usage commitment: $1,000/mo</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {['Alternative investments', 'SMB', 'USA'].map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-md border border-ew-border/50 bg-ew-background/60 px-2 py-0.5 text-sm font-medium text-ew-foreground"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-medium tracking-tight text-ew-muted-foreground/90">
+                                Stage
+                              </p>
+                              <p className="text-sm font-medium text-ew-foreground">Discovery</p>
+                            </div>
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-medium tracking-tight text-ew-muted-foreground/90">
+                                Employees
+                              </p>
+                              <p className="text-sm font-medium tabular-nums text-ew-foreground">9</p>
+                            </div>
+                          </div>
+                          <div className="space-y-2 border-t border-ew-border/30 pt-3">
+                            <div className="flex items-baseline justify-between gap-4">
+                              <span className="shrink-0 text-xs font-medium text-ew-muted-foreground">
+                                Platform fee
+                              </span>
+                              <span className="text-right text-sm font-medium tabular-nums text-ew-foreground">
+                                $1,000/mo
+                              </span>
+                            </div>
+                            <div className="flex items-baseline justify-between gap-4">
+                              <span className="shrink-0 text-xs font-medium text-ew-muted-foreground">
+                                Usage commitment
+                              </span>
+                              <span className="text-right text-sm font-medium tabular-nums text-ew-foreground">
+                                $1,000/mo
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </IntelCard>
                     </div>
                   )}
-                </div>
-
-                {/* Right Column: Parameters & Evidence */}
-                <div className="w-[360px] p-10 space-y-12 bg-white overflow-y-auto custom-scrollbar">
-                  <div>
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-ew-muted-foreground/60 mb-8 pb-2 border-b border-ew-border/30">Deal Parameters</h3>
-                    <div className="space-y-5">
-                      {[
-                        { label: 'Type', value: 'New Customer' },
-                        { label: 'Stage', value: 'Discovery' },
-                        { label: 'GTM', value: 'SMB' },
-                        { label: 'Region', value: 'USA' },
-                        { label: 'Vertical', value: 'Fintech' },
-                        { label: 'Subvertical', value: 'Alt. Investments' }
-                      ].map((param, i) => (
-                        <div key={i} className="flex justify-between items-baseline group">
-                          <span className="text-[11px] text-ew-muted-foreground font-medium group-hover:text-ew-foreground transition-colors">{param.label}</span>
-                          <span className="text-xs font-black text-ew-foreground tracking-tight">{param.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-ew-muted-foreground/60 mb-8 pb-2 border-b border-ew-border/30">Evidence</h3>
-                    <div className="space-y-8">
-                      <div className="relative pl-6 border-l-2 border-ew-border hover:border-brand-accent-gold transition-colors py-1">
-                        <p className="text-[10px] font-black text-ew-foreground mb-2 uppercase tracking-widest">10/15/2025 Call</p>
-                        <p className="text-[12px] text-ew-muted-foreground leading-relaxed font-medium">
-                          $1K/mo platform fee, $2/acct bundled rate, 750 users Q1/Q2
-                        </p>
-                      </div>
-                      <div className="relative pl-6 border-l-2 border-ew-border hover:border-brand-accent-gold transition-colors py-1">
-                        <p className="text-[10px] font-black text-ew-foreground mb-2 uppercase tracking-widest">10/08/2025 Call</p>
-                        <p className="text-[12px] text-ew-muted-foreground leading-relaxed font-medium">
-                          Unified provider for Identity, Balance (checking) for bank account linking
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
+
+              {processStep >= 4 && processStep < 5 && (
+                <div className="relative z-20 flex shrink-0 flex-col gap-2 border-t border-ew-border bg-white px-5 py-3 md:flex-row md:items-end md:gap-3 md:px-8 md:py-3">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <label
+                      htmlFor="copilot-quote-name"
+                      className="block text-xs font-black tracking-tight text-ew-muted-foreground/60"
+                    >
+                      Quote name
+                    </label>
+                    <Input
+                      id="copilot-quote-name"
+                      type="text"
+                      value={quoteName}
+                      onChange={(e) => setQuoteName(e.target.value)}
+                      placeholder="Enter quote name…"
+                      className="h-9 w-full font-semibold text-ew-foreground"
+                    />
+                  </div>
+                  <div className="flex shrink-0 justify-stretch md:justify-end">
+                    <Button
+                      color="primary"
+                      onClick={() => {
+                        setIsCopilotOpen(false);
+                        setCurrentView('pricing-options');
+                      }}
+                      className="w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm md:w-auto"
+                      textAlign="center"
+                    >
+                      <span>Finalize and Review Quote</span>
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-50" />
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* Full Level Overlay when complete */}
               {processStep >= 5 && (
@@ -1332,26 +1475,28 @@ export default function App() {
                   <motion.div 
                      initial={{ opacity: 0, scale: 0.95, y: 20 }}
                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                     className="p-14 bg-white border border-ew-border shadow-[0_64px_128px_-16px_rgba(0,0,0,0.12)] rounded-[56px] text-center max-w-2xl w-full border-t-white relative"
+                     className="relative w-full max-w-2xl rounded-[56px] border border-ew-border bg-white p-14 text-center shadow-md border-t-white"
                   >
                      <div className="absolute inset-x-0 top-0 h-40 bg-brand-accent-gold/10 blur-[100px] pointer-events-none rounded-full" />
                      <div className="relative z-10">
-                        <div className="w-24 h-24 bg-ew-primary rounded-full flex items-center justify-center mx-auto mb-10 ring-12 ring-ew-primary/5 shadow-2xl">
+                        <div className="mx-auto mb-10 flex h-24 w-24 items-center justify-center rounded-full bg-ew-primary shadow-md ring-12 ring-ew-primary/5">
                           <CheckCircle2 className="w-12 h-12 text-white" />
                         </div>
-                        <h2 className="text-4xl font-black text-ew-foreground mb-4 tracking-tighter">Quote Generated Successfully</h2>
-                        <p className="text-lg text-ew-muted-foreground mb-14 font-medium opacity-80">Your optimized quote is ready for review.</p>
+                        <h2 className="mb-4 text-2xl font-black tracking-tighter text-ew-foreground">Quote generated successfully</h2>
+                        <p className="mb-14 text-sm font-medium text-ew-muted-foreground opacity-80">Your optimized quote is ready for review.</p>
 
                         <div className="grid grid-cols-4 gap-4 mb-14">
                            {[
-                             { label: 'Confidence', value: 'HIGH', color: 'text-ew-primary' },
+                             { label: 'Confidence', value: 'High', color: 'text-ew-primary' },
                              { label: 'Products', value: '4', color: 'text-ew-foreground' },
                              { label: 'Similar', value: '1', color: 'text-ew-foreground' },
                              { label: 'Recommended', value: '4', color: 'text-ew-foreground' }
                            ].map((stat, i) => (
-                             <div key={i} className="p-6 bg-ew-background/50 border border-ew-border/50 rounded-[28px] shadow-sm">
-                                <span className="text-[10px] uppercase font-black text-ew-muted-foreground/60 block mb-3 tracking-[0.2em]">{stat.label}</span>
-                                <span className={cn("text-2xl font-black tracking-tighter", stat.color)}>{stat.value}</span>
+                             <div key={i} className="rounded-[28px] border border-ew-border/50 bg-ew-background/50 p-6">
+                                <span className="mb-3 block text-xs font-black tracking-tight text-ew-muted-foreground/60">{stat.label}</span>
+                                <span className={cn("text-2xl font-black tracking-tighter", stat.color)}>
+                                  {stat.label === 'Confidence' ? toSentenceCase(String(stat.value)) : stat.value}
+                                </span>
                              </div>
                            ))}
                         </div>

@@ -35,7 +35,7 @@
 }
 
 .intel-card {
-  @apply bg-white border border-ew-border/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all;
+  @apply overflow-hidden rounded-2xl border border-ew-border/50 bg-white shadow-none transition-colors hover:border-ew-border;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
