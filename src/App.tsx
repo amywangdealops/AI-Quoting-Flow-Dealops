@@ -393,6 +393,7 @@ const SelectProductsView = ({
 
 const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { onBack: () => void, onSelectProducts: () => void, onFinish: () => void, quoteName: string }) => {
   const [usageMinimum, setUsageMinimum] = useState(false);
+  const [isRecapExpanded, setIsRecapExpanded] = useState(true);
 
   const chartData = [
     { name: 'No Commitment', total: 54988, color: '#006644' },
@@ -491,20 +492,23 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
             
             {/* AI Intelligence Recap Header */}
             <div className="bg-white border border-blue-200 rounded-[32px] overflow-hidden shadow-[0_2px_20px_rgba(59,130,246,0.08)]">
-               {/* Header strip inspired by the Summary element */}
-               <div className="px-10 py-6 border-b border-blue-100 flex items-center justify-between bg-white">
-                 <div className="flex items-center gap-6">
-                   <div className="flex items-center gap-2">
-                     <Sparkles className="w-4 h-4 text-black" />
-                     <span className="text-[10px] font-black uppercase tracking-[0.25em] text-black">Quote Intelligence Recap</span>
-                   </div>
+               {/* Header strip */}
+               <button
+                 onClick={() => setIsRecapExpanded(v => !v)}
+                 className="w-full px-10 py-6 border-b border-blue-100 flex items-center justify-between bg-white hover:bg-ew-muted/20 transition-colors text-left"
+               >
+                 <div className="flex items-center gap-3">
+                   <Sparkles className="w-4 h-4 text-black" />
+                   <span className="text-[10px] font-black uppercase tracking-[0.25em] text-black">Quote Intelligence Recap</span>
                  </div>
                  <div className="flex items-center gap-4">
                    <span className="text-[10px] font-black text-ew-muted-foreground/50 uppercase tracking-widest">Confidence</span>
                    <Badge color="darkGreen">High</Badge>
+                   <ChevronDown className={cn("w-4 h-4 text-ew-muted-foreground transition-transform duration-300", isRecapExpanded ? "rotate-0" : "-rotate-90")} />
                  </div>
-               </div>
-               
+               </button>
+
+               <div className={cn("overflow-hidden transition-all duration-300", isRecapExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0")}>
                <div className="p-10 grid grid-cols-3 gap-12 relative">
                   {/* Visual Divider Lines */}
                   <div className="absolute top-10 bottom-10 left-1/3 w-px bg-ew-border/30" />
@@ -606,6 +610,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                      </div>
                   </div>
                </div>
+               </div>{/* end collapsible */}
             </div>
 
             {/* Config Bar */}
