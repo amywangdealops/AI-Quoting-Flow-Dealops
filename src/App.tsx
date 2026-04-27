@@ -905,9 +905,6 @@ export default function App() {
             >
               <div className="absolute inset-0 bg-brand-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               <div className="flex items-center gap-8 relative z-10">
-                <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center ring-1 ring-white/10 shadow-inner">
-                  <Zap className="w-8 h-8 text-brand-accent-gold fill-current" />
-                </div>
                 <div>
                   <h3 className="text-xl font-bold tracking-tight mb-1">Portfolio Intelligence Engine</h3>
                   <p className="text-sm text-white/50 font-medium max-w-lg">Using AI to analyze historical deals, benchmark similar accounts, and draft optimized product configurations.</p>
