@@ -14,6 +14,7 @@ import { cn } from '../lib/utils';
 
 type ButtonColor =
   | 'primary'
+  | 'accent'
   | 'white'
   | 'noBg'
   | 'noBg-red'
@@ -89,6 +90,10 @@ export const Button: React.FC<ButtonProps> = ({
     primary: {
       default: 'border border-ew-primary shadow-sm bg-ew-primary text-white hover:bg-ew-primary/85',
       loading: 'border border-ew-border bg-ew-muted text-ew-primary',
+    },
+    accent: {
+      default: 'bg-ew-accent text-ew-primary shadow-xl shadow-black/15 hover:bg-ew-accent/85 active:scale-95',
+      loading: 'bg-ew-accent/50 text-ew-primary/50',
     },
     white: {
       default: 'border border-gray-200 shadow-sm bg-white text-slate-900 hover:bg-gray-50',

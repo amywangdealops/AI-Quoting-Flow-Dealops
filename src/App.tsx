@@ -908,12 +908,12 @@ export default function App() {
                   <p className="text-sm text-white/50 font-medium max-w-lg">Using AI to analyze historical deals, benchmark similar accounts, and draft optimized product configurations.</p>
                 </div>
               </div>
-              <button 
+              <Button
+                color="accent"
+                label="Run Quote Intelligence"
                 onClick={handleGenerate}
-                className="px-8 py-4 bg-brand-accent-gold text-ew-primary rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20"
-              >
-                Run Quote Intelligence
-              </button>
+                className="rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] px-8 py-4"
+              />
             </motion.div>
           )}
 
@@ -1026,10 +1026,10 @@ export default function App() {
                   <div className="flex flex-col">
                     <div className="flex items-center gap-3">
                       <h2 className="text-lg font-bold text-ew-foreground tracking-tight">Al Mabrook – ABI</h2>
-                      <div className="px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-1.5">
-                        <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-[9px] font-bold text-green-600 uppercase tracking-widest">Generating quote</span>
-                      </div>
+                      <Badge color="green" className="flex items-center gap-1.5 uppercase tracking-widest">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                        Generating quote
+                      </Badge>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-ew-muted-foreground font-medium mt-0.5">
                       <span>New Customer</span>
@@ -1041,12 +1041,13 @@ export default function App() {
                   </div>
                 </div>
                 
-                <button 
+                <Button
+                  color="ghost-gray"
                   onClick={() => setIsCopilotOpen(false)}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-ew-muted rounded-full transition-all group"
+                  className="w-10 h-10 rounded-full !p-0 justify-center"
                 >
-                  <Plus className="w-6 h-6 text-ew-muted-foreground transform rotate-45 group-hover:text-ew-foreground transition-colors" />
-                </button>
+                  <Plus className="w-5 h-5 transform rotate-45" />
+                </Button>
               </div>
 
               {/* Horizontal Pipeline Step Rail */}
@@ -1122,18 +1123,23 @@ export default function App() {
                                 />
                              </div>
 
-                             <button 
+                             <Button
+                               color="primary"
                                onClick={() => { setIsCopilotOpen(false); setCurrentView('pricing-options'); }}
-                               className="w-full p-6 bg-white border border-ew-border/50 hover:border-ew-primary/30 hover:bg-ew-background/50 rounded-2xl flex items-center gap-5 transition-all group text-left"
+                               className="w-full justify-between rounded-2xl py-5 px-6 h-auto"
+                               textAlign="left"
                              >
-                                <div className="w-12 h-12 rounded-xl bg-white border border-ew-border/50 flex items-center justify-center shrink-0 group-hover:border-ew-primary/30">
-                                   <ArrowRight className="w-5 h-5 text-ew-muted-foreground group-hover:text-ew-primary" />
-                                </div>
-                                <div className="flex-1">
-                                   <p className="text-sm font-bold text-ew-foreground">Finalize & Create Quote</p>
-                                   <p className="text-[11px] text-ew-muted-foreground font-medium opacity-60">Apply AI recommendations and view detailed pricing</p>
-                                </div>
-                             </button>
+                               <div className="flex items-center gap-4">
+                                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                                   <ArrowRight className="w-5 h-5" />
+                                 </div>
+                                 <div className="text-left">
+                                   <p className="text-sm font-bold">Finalize & Create Quote</p>
+                                   <p className="text-[11px] font-medium opacity-60">Apply AI recommendations and view detailed pricing</p>
+                                 </div>
+                               </div>
+                               <ChevronRight className="w-4 h-4 opacity-40 shrink-0" />
+                             </Button>
                           </div>
                        </div>
 
