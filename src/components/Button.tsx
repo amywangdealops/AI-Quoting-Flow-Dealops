@@ -77,7 +77,7 @@ export const Button: React.FC<ButtonProps> = ({
   }, [buttonHeight]);
 
   const baseClasses =
-    'flex items-center gap-2 whitespace-nowrap rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-900 transition-colors duration-200';
+    'flex items-center gap-2 whitespace-nowrap rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ew-primary transition-colors duration-200';
 
   const sizeClasses: Record<ButtonSize, string> = {
     default: 'font-medium py-1.5 px-2 text-sm',
@@ -87,24 +87,24 @@ export const Button: React.FC<ButtonProps> = ({
 
   const colorClasses: Record<ButtonColor, Record<'default' | 'loading', string>> = {
     primary: {
-      default: 'border border-fuchsia-900 shadow-sm bg-fuchsia-900 text-white hover:bg-fuchsia-800',
-      loading: 'border border-fuchsia-300 bg-fuchsia-100 text-fuchsia-900',
+      default: 'border border-ew-primary shadow-sm bg-ew-primary text-white hover:bg-ew-primary/85',
+      loading: 'border border-ew-border bg-ew-muted text-ew-primary',
     },
     white: {
       default: 'border border-gray-200 shadow-sm bg-white text-slate-900 hover:bg-gray-50',
       loading: 'border border-gray-200 bg-gray-50 text-gray-600',
     },
     noBg: {
-      default: 'text-fuchsia-900 hover:text-fuchsia-700',
-      loading: 'text-fuchsia-300',
+      default: 'text-ew-primary hover:text-ew-primary/70',
+      loading: 'text-ew-primary/30',
     },
     'noBg-red': {
       default: 'text-red-600 hover:text-red-500',
       loading: 'text-red-300',
     },
     ghost: {
-      default: 'text-fuchsia-900 hover:bg-fuchsia-50 border border-transparent',
-      loading: 'text-fuchsia-300 bg-fuchsia-50 border border-transparent',
+      default: 'text-ew-primary hover:bg-ew-muted border border-transparent',
+      loading: 'text-ew-primary/30 bg-ew-muted border border-transparent',
     },
     'ghost-gray': {
       default: 'text-gray-900 hover:bg-gray-50 border border-transparent',
