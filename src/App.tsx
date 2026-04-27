@@ -917,7 +917,7 @@ export default function App() {
                 color="accent"
                 label="Run Quote Intelligence"
                 onClick={handleGenerate}
-                className="rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] px-8 py-4"
+                className="rounded-2xl text-sm font-medium px-8 py-4"
               />
             </motion.div>
           )}
