@@ -196,46 +196,190 @@ const IntelCard = ({
   children: React.ReactNode;
   isComplete: boolean;
   subtitle?: string;
-}) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 15 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="intel-card"
-  >
-    <div className={cn(
-      "flex items-center justify-between border-b border-ew-border/30 px-4 py-3",
-      isComplete ? "bg-ew-muted/20" : "bg-brand-accent-gold/5"
-    )}>
-      <div className="flex items-center gap-2.5">
-        <div className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-500",
-          isComplete ? "bg-ew-foreground/5 text-ew-foreground" : "bg-brand-accent-gold/10 text-brand-accent-gold animate-pulse"
-        )}>
-          <Icon className="h-4 w-4" />
-        </div>
-        <div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-sm font-semibold leading-snug tracking-tight text-ew-foreground">
-              {title}
-            </span>
-            {subtitle && (
-              <span className="text-xs text-ew-muted-foreground">{subtitle}</span>
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="intel-card"
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={cn(
+          'flex w-full items-center justify-between border-b border-ew-border/30 px-4 py-3 text-left transition-colors hover:bg-black/[0.02]',
+          isComplete ? 'bg-ew-muted/20' : 'bg-brand-accent-gold/5',
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div
+            className={cn(
+              'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-500',
+              isComplete
+                ? 'bg-ew-foreground/5 text-ew-foreground'
+                : 'bg-brand-accent-gold/10 text-brand-accent-gold animate-pulse',
+            )}
+          >
+            <Icon className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="text-sm font-semibold leading-snug tracking-tight text-ew-foreground">
+                {title}
+              </span>
+              {subtitle && (
+                <span className="text-xs text-ew-muted-foreground">{subtitle}</span>
+              )}
+            </div>
+            {!isComplete && (
+              <span className="mt-0.5 block text-xs font-medium tracking-tight text-ew-muted-foreground">
+                Processing…
+              </span>
             )}
           </div>
-          {!isComplete && (
-            <span className="mt-0.5 block text-xs font-medium tracking-tight text-ew-muted-foreground">
-              Processing…
-            </span>
-          )}
         </div>
-      </div>
-      {isComplete && <CheckCircle2 className="h-4 w-4 shrink-0 text-ew-primary" />}
+        <div className="flex shrink-0 items-center gap-2 pl-2">
+          <ChevronDown
+            className={cn(
+              'h-4 w-4 text-ew-muted-foreground transition-transform duration-200',
+              open ? 'rotate-0' : '-rotate-90',
+            )}
+            aria-hidden
+          />
+          {isComplete && <CheckCircle2 className="h-4 w-4 shrink-0 text-ew-primary" />}
+        </div>
+      </button>
+      {open && <div className="bg-white p-3.5">{children}</div>}
+    </motion.div>
+  );
+};
+
+const COPILOT_ACTIVITY_MESSAGES = [
+  'Fetching opportunity context... Fintech | $24K',
+  'Found 3 similar accounts (28.7s)',
+  'Analyzing 2 historical deals with 13 products',
+  'Generating recommendations for 4 products...',
+] as const;
+
+const ActivityFeedLine = ({
+  text,
+  isComplete,
+  isActive,
+}: {
+  text: string;
+  isComplete: boolean;
+  isActive: boolean;
+}) => {
+  const [displayed, setDisplayed] = useState('');
+
+  useEffect(() => {
+    if (isComplete) {
+      setDisplayed(text);
+      return;
+    }
+    if (!isActive) {
+      setDisplayed('');
+      return;
+    }
+    setDisplayed('');
+    let i = 0;
+    const id = window.setInterval(() => {
+      i += 1;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) {
+        window.clearInterval(id);
+      }
+    }, 14);
+    return () => window.clearInterval(id);
+  }, [text, isComplete, isActive]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+      className="flex items-start gap-2.5"
+    >
+      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center" aria-hidden>
+        {isComplete ? (
+          <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />
+        ) : isActive ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-ew-primary" />
+        ) : null}
+      </span>
+      <span
+        className={cn(
+          'min-w-0 flex-1 text-[11px] leading-snug tracking-tight md:text-xs',
+          isComplete && 'text-ew-muted-foreground',
+          isActive && 'font-semibold text-ew-foreground',
+        )}
+      >
+        {displayed}
+      </span>
+    </motion.div>
+  );
+};
+
+const CopilotActivityFeed = ({ processStep }: { processStep: number }) => {
+  if (processStep < 0 || processStep >= 5) return null;
+
+  const collapsed = processStep >= 4;
+  const visibleCount = Math.min(processStep + 1, COPILOT_ACTIVITY_MESSAGES.length);
+
+  return (
+    <div className="shrink-0 border-b border-ew-border bg-gradient-to-b from-ew-muted/25 to-white/90">
+      <AnimatePresence mode="wait">
+        {collapsed ? (
+          <motion.div
+            key="summary"
+            role="status"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="px-4 py-2.5 md:px-6"
+          >
+            <div className="mx-auto flex w-full max-w-full items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+              <span className="text-xs font-semibold leading-snug tracking-tight text-ew-foreground">
+                4 products recommended · HIGH confidence · 1 similar account found
+              </span>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="feed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="px-4 py-2 md:px-6"
+          >
+            <div className="mx-auto flex w-full max-w-full flex-col gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ew-muted-foreground/75">
+                Live activity
+              </span>
+              <div className="flex max-h-[7rem] flex-col gap-2 overflow-y-auto overscroll-contain pr-0.5">
+                {COPILOT_ACTIVITY_MESSAGES.slice(0, visibleCount).map((msg, i) => (
+                  <React.Fragment key={i}>
+                    <ActivityFeedLine
+                      text={msg}
+                      isComplete={i < processStep}
+                      isActive={i === processStep}
+                    />
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-    <div className="bg-white p-3.5">
-      {children}
-    </div>
-  </motion.div>
-);
+  );
+};
 
 interface QuoteCardProps {
   quote: Quote;
@@ -1347,7 +1491,7 @@ export default function App() {
       {/* AI Intelligence Copilot Panel (Modal) */}
       <AnimatePresence>
         {isCopilotOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-5">
             <motion.div 
                initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
@@ -1360,10 +1504,10 @@ export default function App() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative flex h-full max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-ew-border bg-white shadow-md"
+              className="relative flex h-auto min-h-[min(58vh,620px)] max-h-[min(82vh,800px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-ew-border bg-white shadow-md"
             >
               {/* Copilot Header */}
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ew-border bg-white/80 px-6 py-3.5 backdrop-blur-xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ew-border bg-white/80 px-5 py-3 backdrop-blur-xl">
                 <div className="flex items-center gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-ew-border bg-white shadow-sm">
                     <img
@@ -1375,7 +1519,7 @@ export default function App() {
                     />
                   </div>
                   <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-bold text-ew-foreground tracking-tight">Al Mabrook – ABI</h2>
+                    <h2 className="text-xl font-bold tracking-tight text-ew-foreground md:text-2xl">Al Mabrook – ABI</h2>
                     <Badge color="green" className="flex items-center gap-1.5 tracking-tight">
                       <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
                       Generating quote
@@ -1392,79 +1536,183 @@ export default function App() {
                 </Button>
               </div>
 
-              {/* Horizontal Pipeline Step Rail */}
-              <div className="border-b border-ew-border bg-ew-background/50 px-5 py-3.5">
-                <div className="mx-auto flex w-full max-w-4xl items-center justify-center">
+              {/* Vertical pipeline: step 1 (Context) at top → step 5 (Quote Ready) at bottom */}
+              <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
+                <nav
+                  aria-label="Quote generation steps"
+                  className="flex min-h-0 w-[108px] shrink-0 flex-col items-center overflow-y-auto overflow-x-hidden border-r border-ew-border/60 bg-ew-background/30 px-1.5 py-3 custom-scrollbar md:w-[118px]"
+                >
                   {steps.map((step, idx) => {
                     const isLastStep = idx === steps.length - 1;
                     const stepComplete =
                       processStep > idx || (processStep === idx && isLastStep);
                     return (
-                    <React.Fragment key={step.id}>
-                      <div className="group flex items-center gap-2 px-2">
-                        <div
-                          className={cn(
-                            'flex h-7 w-7 shrink-0 grow-0 items-center justify-center rounded-full text-xs font-bold shadow-sm transition-all duration-500',
-                            stepComplete
-                              ? 'bg-ew-primary text-ew-background'
-                              : processStep === idx
-                                ? 'bg-brand-accent-gold text-ew-foreground ring-4 ring-brand-accent-gold/10 animate-pulse'
-                                : 'border border-ew-border bg-white text-ew-muted-foreground',
-                          )}
-                        >
-                          {stepComplete ? '✓' : idx + 1}
-                        </div>
-
-                        {/* Stacking logos if present */}
-                        {step.logos && step.logos.length > 0 && (
-                          <div className="flex shrink-0 items-center gap-1" aria-label="Data sources">
-                            {step.logos.map((logo, lIdx) => (
-                              <div
-                                key={lIdx}
-                                className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md border border-ew-border/50 bg-white p-0.5 shadow-sm"
-                              >
-                                <img
-                                  src={logo}
-                                  alt={logo.includes('gong') ? 'Gong' : 'Salesforce'}
-                                  className="h-full w-full object-contain"
-                                  loading="lazy"
-                                />
-                              </div>
-                            ))}
+                      <React.Fragment key={step.id}>
+                        <div className="flex w-full flex-col items-center gap-1 px-0.5">
+                          <div
+                            className={cn(
+                              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold shadow-none transition-all duration-500 md:h-6 md:w-6 md:text-[10px]',
+                              stepComplete
+                                ? 'bg-ew-muted text-ew-muted-foreground'
+                                : processStep === idx
+                                  ? 'border border-ew-border/80 bg-white text-ew-foreground shadow-sm ring-1 ring-ew-border/60'
+                                  : 'border border-ew-border/70 bg-white/90 text-ew-muted-foreground/90',
+                            )}
+                          >
+                            {stepComplete ? '✓' : idx + 1}
                           </div>
-                        )}
-
-                        <span
-                          className={cn(
-                            'whitespace-nowrap text-xs font-bold tracking-tight transition-colors duration-300',
-                            stepComplete
-                              ? 'text-ew-primary'
-                              : processStep === idx
-                                ? 'text-ew-foreground'
-                                : 'text-ew-muted-foreground',
+                          <span
+                            className={cn(
+                              'max-w-full text-center text-[10px] font-semibold leading-tight tracking-tight transition-colors duration-300 md:text-xs',
+                              stepComplete
+                                ? 'text-ew-muted-foreground'
+                                : processStep === idx
+                                  ? 'text-ew-foreground/90'
+                                  : 'text-ew-muted-foreground/85',
+                            )}
+                          >
+                            {step.label}
+                          </span>
+                          {step.logos && step.logos.length > 0 && (
+                            <div
+                              className="mt-0.5 flex flex-wrap items-center justify-center gap-0.5"
+                              aria-label="Data sources"
+                            >
+                              {step.logos.map((logo, lIdx) => (
+                                <div
+                                  key={lIdx}
+                                  className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded border border-ew-border/40 bg-white/90 p-px md:h-[18px] md:w-[18px] md:p-0.5"
+                                >
+                                  <img
+                                    src={logo}
+                                    alt={logo.includes('gong') ? 'Gong' : 'Salesforce'}
+                                    className="h-full w-full object-contain opacity-[0.72] saturate-[0.85]"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              ))}
+                            </div>
                           )}
-                        >
-                          {step.label}
-                        </span>
-                      </div>
-                      {idx < steps.length - 1 && (
-                        <div className={cn(
-                          "h-[1px] grow transition-colors duration-500 mx-2 min-w-[20px]",
-                          processStep > idx ? "bg-ew-primary" : "bg-ew-border"
-                        )} />
-                      )}
-                    </React.Fragment>
+                        </div>
+                        {idx < steps.length - 1 && (
+                          <div
+                            className={cn(
+                              'my-1.5 h-5 w-[2px] shrink-0 rounded-full transition-colors duration-500 md:my-2 md:h-6',
+                              processStep > idx ? 'bg-ew-muted-foreground/25' : 'bg-ew-border/70',
+                            )}
+                          />
+                        )}
+                      </React.Fragment>
                     );
                   })}
-                </div>
-              </div>
+                </nav>
 
-              {/* Main stream — full width (no side rail) */}
-              <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white p-7 custom-scrollbar md:p-8">
-                  <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                  <CopilotActivityFeed processStep={processStep} />
+
+                  {/* Main stream — IntelCard tabs */}
+                  <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white p-5 custom-scrollbar md:p-6">
+                      <div className="mx-auto flex w-full min-w-0 max-w-full flex-col gap-4">
+                  {processStep >= 0 && (
+                    <div>
+                      <IntelCard
+                        title="Opportunity context loaded"
+                        icon={Monitor}
+                        isComplete={processStep > 0}
+                        subtitle="1.3s"
+                      >
+                        <div className="space-y-4">
+                          <div className="flex flex-wrap gap-1.5">
+                            {['Alternative investments', 'SMB', 'USA'].map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-md border border-ew-border/50 bg-ew-background/60 px-2 py-0.5 text-sm font-medium text-ew-foreground"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-medium tracking-tight text-ew-muted-foreground/90">
+                                Stage
+                              </p>
+                              <p className="text-sm font-medium text-ew-foreground">Discovery</p>
+                            </div>
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-medium tracking-tight text-ew-muted-foreground/90">
+                                Employees
+                              </p>
+                              <p className="text-sm font-medium text-ew-foreground">9</p>
+                            </div>
+                          </div>
+                          <div className="space-y-2 border-t border-ew-border/30 pt-3">
+                            <div className="flex items-baseline justify-between gap-4">
+                              <span className="shrink-0 text-xs font-medium text-ew-muted-foreground">
+                                Platform fee
+                              </span>
+                              <span className="text-right text-sm font-medium text-ew-foreground">
+                                $1,000/mo
+                              </span>
+                            </div>
+                            <div className="flex items-baseline justify-between gap-4">
+                              <span className="shrink-0 text-xs font-medium text-ew-muted-foreground">
+                                Usage commitment
+                              </span>
+                              <span className="text-right text-sm font-medium text-ew-foreground">
+                                $1,000/mo
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </IntelCard>
+                    </div>
+                  )}
+
+                  {processStep >= 1 && (
+                    <div>
+                      <IntelCard title="3 similar accounts found" icon={Database} isComplete={processStep > 1} subtitle="3.2s">
+                        <div className="space-y-4">
+                          <p className="text-xs font-medium leading-relaxed tracking-tight text-ew-muted-foreground/90">
+                            Ranked by fit to this opportunity’s size band ($20K–$30K) and product footprint.
+                          </p>
+                          <div className="w-full min-w-0 overflow-x-auto">
+                            <div className="mb-0 grid grid-cols-[1fr_56px_1fr_80px] gap-x-3 text-xs font-medium tracking-tight text-ew-muted-foreground/90 min-[480px]:grid-cols-[1fr_60px_160px_80px] min-[480px]:gap-x-4">
+                              <span>Account</span>
+                              <span>ACV</span>
+                              <span>Products</span>
+                              <span className="text-right">Match</span>
+                            </div>
+                            <div className="mt-2 divide-y divide-ew-border/30">
+                              {[
+                                { name: 'Binaxity Holdings', acv: '$54K', prods: 'Auth, Identity, Balance, Platform', match: 95 },
+                                { name: 'NovaPay Labs', acv: '$31K', prods: 'Auth, Balance, Identity', match: 88 },
+                                { name: 'Meridian Fintech', acv: '$22K', prods: 'Auth, Identity', match: 74 },
+                              ].map((row, i) => (
+                                <div
+                                  key={i}
+                                  className="grid grid-cols-[1fr_56px_1fr_80px] items-center gap-x-3 py-3 text-sm min-[480px]:grid-cols-[1fr_60px_160px_80px] min-[480px]:gap-x-4"
+                                >
+                                  <span className="min-w-0 font-medium text-ew-foreground">{row.name}</span>
+                                  <span className="font-medium text-ew-foreground">{row.acv}</span>
+                                  <span className="min-w-0 text-xs font-medium text-ew-muted-foreground/90">
+                                    {row.prods}
+                                  </span>
+                                  <span className="text-right text-sm font-medium text-ew-foreground">
+                                    {row.match}%
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </IntelCard>
+                    </div>
+                  )}
+
                   {processStep >= 2 && (
-                    <div className="order-2">
+                    <div>
                       <IntelCard title="Analyzing Historical Deals" icon={History} isComplete={processStep > 2}>
                         <div className="space-y-4">
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1481,7 +1729,7 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div className="overflow-hidden rounded-lg border border-ew-border/30 bg-white">
+                          <div className="overflow-x-auto overflow-y-hidden rounded-lg border border-ew-border/30 bg-white">
                             <div
                               className={cn(
                                 'grid gap-x-5 border-b border-ew-border/30 bg-ew-background/20 px-3 py-2.5 text-xs font-medium tracking-tight text-ew-muted-foreground/90',
@@ -1577,109 +1825,14 @@ export default function App() {
                       </IntelCard>
                     </div>
                   )}
-
-                  {processStep >= 1 && (
-                    <div className="order-4">
-                      <IntelCard title="3 similar accounts found" icon={Database} isComplete={processStep > 1} subtitle="3.2s">
-                        <div className="space-y-4">
-                          <p className="text-xs font-medium leading-relaxed tracking-tight text-ew-muted-foreground/90">
-                            Ranked by fit to this opportunity’s size band ($20K–$30K) and product footprint.
-                          </p>
-                          <div className="w-full">
-                            <div className="mb-0 grid grid-cols-[1fr_56px_1fr_80px] gap-x-3 text-xs font-medium tracking-tight text-ew-muted-foreground/90 min-[480px]:grid-cols-[1fr_60px_160px_80px] min-[480px]:gap-x-4">
-                              <span>Account</span>
-                              <span>ACV</span>
-                              <span>Products</span>
-                              <span className="text-right">Match</span>
-                            </div>
-                            <div className="mt-2 divide-y divide-ew-border/30">
-                              {[
-                                { name: 'Binaxity Holdings', acv: '$54K', prods: 'Auth, Identity, Balance, Platform', match: 95 },
-                                { name: 'NovaPay Labs', acv: '$31K', prods: 'Auth, Balance, Identity', match: 88 },
-                                { name: 'Meridian Fintech', acv: '$22K', prods: 'Auth, Identity', match: 74 },
-                              ].map((row, i) => (
-                                <div
-                                  key={i}
-                                  className="grid grid-cols-[1fr_56px_1fr_80px] items-center gap-x-3 py-3 text-sm min-[480px]:grid-cols-[1fr_60px_160px_80px] min-[480px]:gap-x-4"
-                                >
-                                  <span className="min-w-0 font-medium text-ew-foreground">{row.name}</span>
-                                  <span className="font-medium text-ew-foreground">{row.acv}</span>
-                                  <span className="min-w-0 text-xs font-medium text-ew-muted-foreground/90">
-                                    {row.prods}
-                                  </span>
-                                  <span className="text-right text-sm font-medium text-ew-foreground">
-                                    {row.match}%
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </IntelCard>
+                      </div>
                     </div>
-                  )}
-
-                  {processStep >= 0 && (
-                    <div className="order-5">
-                      <IntelCard
-                        title="Opportunity context loaded"
-                        icon={Monitor}
-                        isComplete={processStep > 0}
-                        subtitle="1.3s"
-                      >
-                        <div className="space-y-4">
-                          <div className="flex flex-wrap gap-1.5">
-                            {['Alternative investments', 'SMB', 'USA'].map((tag) => (
-                              <span
-                                key={tag}
-                                className="rounded-md border border-ew-border/50 bg-ew-background/60 px-2 py-0.5 text-sm font-medium text-ew-foreground"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
-                            <div className="space-y-0.5">
-                              <p className="text-xs font-medium tracking-tight text-ew-muted-foreground/90">
-                                Stage
-                              </p>
-                              <p className="text-sm font-medium text-ew-foreground">Discovery</p>
-                            </div>
-                            <div className="space-y-0.5">
-                              <p className="text-xs font-medium tracking-tight text-ew-muted-foreground/90">
-                                Employees
-                              </p>
-                              <p className="text-sm font-medium text-ew-foreground">9</p>
-                            </div>
-                          </div>
-                          <div className="space-y-2 border-t border-ew-border/30 pt-3">
-                            <div className="flex items-baseline justify-between gap-4">
-                              <span className="shrink-0 text-xs font-medium text-ew-muted-foreground">
-                                Platform fee
-                              </span>
-                              <span className="text-right text-sm font-medium text-ew-foreground">
-                                $1,000/mo
-                              </span>
-                            </div>
-                            <div className="flex items-baseline justify-between gap-4">
-                              <span className="shrink-0 text-xs font-medium text-ew-muted-foreground">
-                                Usage commitment
-                              </span>
-                              <span className="text-right text-sm font-medium text-ew-foreground">
-                                $1,000/mo
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </IntelCard>
-                    </div>
-                  )}
                   </div>
                 </div>
               </div>
 
               {processStep >= 4 && processStep < 5 && (
-                <div className="relative z-20 flex shrink-0 flex-col gap-2 border-t border-ew-border bg-white px-5 py-3 md:flex-row md:items-end md:gap-3 md:px-8 md:py-3">
+                <div className="relative z-20 flex shrink-0 flex-col gap-2 border-t border-ew-border bg-white px-5 py-2.5 md:flex-row md:items-end md:gap-3 md:px-6 md:py-3">
                   <div className="min-w-0 flex-1 space-y-1">
                     <Label
                       htmlFor="copilot-quote-name"
@@ -1699,7 +1852,11 @@ export default function App() {
                   <div className="flex shrink-0 justify-stretch md:justify-end">
                     <ShadcnButton
                       type="button"
-                      className="w-full gap-2 bg-ew-primary px-4 py-2 text-sm font-semibold text-ew-primary-foreground shadow-sm hover:bg-ew-primary/90 md:w-auto"
+                      className={cn(
+                        'w-full gap-2 bg-ew-primary px-4 py-2 text-sm font-semibold text-ew-primary-foreground shadow-sm hover:bg-ew-primary/90 md:w-auto',
+                        processStep === 4 &&
+                          'relative ring-2 ring-brand-accent-gold/55 animate-copilot-finalize-glow',
+                      )}
                       onClick={() => {
                         setIsCopilotOpen(false);
                         setCurrentView('pricing-options');
