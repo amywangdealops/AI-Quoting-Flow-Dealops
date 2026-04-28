@@ -217,7 +217,7 @@ const IntelCard = ({
               {title}
             </span>
             {subtitle && (
-              <span className="text-xs tabular-nums text-ew-muted-foreground font-mono">{subtitle}</span>
+              <span className="text-xs text-ew-muted-foreground">{subtitle}</span>
             )}
           </div>
           {!isComplete && (
@@ -476,8 +476,6 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
     paymentTerms: 'net-30',
     subscriptionMonths: '12',
     offerExpiration: '2026-05-26',
-    renewalPriceProtection: 'yes',
-    priceProtectionCap: '8',
     autoRenew: 'yes',
     waivedOverages: 'none',
   });
@@ -765,38 +763,6 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="qt-renew-protect" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
-                    Renewal price protection
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="qt-renew-protect"
-                      value={quoteTerms.renewalPriceProtection}
-                      onChange={(e) => setQuoteTerms((t) => ({ ...t, renewalPriceProtection: e.target.value }))}
-                      className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-ew-border bg-white py-2 pl-4 pr-10 text-sm font-semibold text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
-                    >
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ew-muted-foreground opacity-60" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="qt-cap" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
-                    Price protection cap (%)
-                  </label>
-                  <input
-                    id="qt-cap"
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.01}
-                    value={quoteTerms.priceProtectionCap}
-                    onChange={(e) => setQuoteTerms((t) => ({ ...t, priceProtectionCap: e.target.value }))}
-                    className="h-11 w-full rounded-xl border border-ew-border bg-white px-4 text-sm font-semibold tabular-nums text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
-                  />
-                </div>
-                <div className="space-y-2">
                   <label htmlFor="qt-auto" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
                     Auto renew
                   </label>
@@ -868,11 +834,11 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                        <Tooltip as="div" location="TOP" text={row.reasoning} className="min-w-0 cursor-default">
                           <div className="text-xs font-bold text-ew-foreground">{row.name}</div>
                        </Tooltip>
-                       <div className="flex h-9 items-center justify-center rounded-lg border border-ew-border bg-ew-background/30 font-mono text-xs font-bold">
+                       <div className="flex h-9 items-center justify-center rounded-lg border border-ew-border bg-ew-background/30 text-xs font-bold">
                           {row.vol}
                        </div>
-                       <div className="text-right font-mono text-xs font-bold text-green-600">{row.list}</div>
-                       <div className="text-right font-mono text-xs font-bold text-brand-accent-gold">{row.l1}</div>
+                       <div className="text-right text-xs font-bold text-green-600">{row.list}</div>
+                       <div className="text-right text-xs font-bold text-brand-accent-gold">{row.l1}</div>
                        {row.tiered ? (
                          <div className="flex h-9 items-stretch justify-end gap-1.5">
                            <Tooltip
@@ -883,7 +849,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                            >
                              <button
                                type="button"
-                               className="flex h-full w-full min-w-0 items-center justify-end rounded-lg border border-ew-border bg-white px-2 py-1.5 font-mono text-xs font-semibold text-ew-muted-foreground shadow-sm ring-2 ring-brand-accent-gold/10 hover:bg-ew-background/60"
+                               className="flex h-full w-full min-w-0 items-center justify-end rounded-lg border border-ew-border bg-white px-2 py-1.5 text-xs font-semibold text-ew-muted-foreground shadow-sm ring-2 ring-brand-accent-gold/10 hover:bg-ew-background/60"
                              >
                                Tiered
                              </button>
@@ -901,16 +867,16 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                            as="div"
                            location="TOP"
                            text={row.priceReasoning}
-                           className="flex h-9 cursor-default items-center justify-center rounded-lg border border-ew-border bg-white font-mono text-xs font-bold ring-2 ring-brand-accent-gold/10"
+                           className="flex h-9 cursor-default items-center justify-center rounded-lg border border-ew-border bg-white text-xs font-bold ring-2 ring-brand-accent-gold/10"
                          >
                             {row.quote}
                          </Tooltip>
                        )}
-                       <div className="text-center font-mono text-xs font-bold text-ew-muted-foreground opacity-60">{row.discount}</div>
+                       <div className="text-center text-xs font-bold text-ew-muted-foreground opacity-60">{row.discount}</div>
                        <div className="flex justify-center">
                           <Badge color="green" size="small">None</Badge>
                        </div>
-                       <div className="text-right font-mono text-xs font-bold text-ew-foreground">{row.revenue}</div>
+                       <div className="text-right text-xs font-bold text-ew-foreground">{row.revenue}</div>
                        <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100">
                           <Trash2 className="h-4 w-4 cursor-pointer text-red-400 hover:text-red-500" />
                        </div>
@@ -936,7 +902,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                     <span className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
                       Suggested minimum
                     </span>
-                    <div className="flex h-11 items-center justify-end rounded-lg border-2 border-emerald-600/35 bg-white px-3 font-mono text-sm font-semibold tabular-nums text-ew-foreground">
+                    <div className="flex h-11 items-center justify-end rounded-lg border-2 border-emerald-600/35 bg-white px-3 text-sm font-semibold text-ew-foreground">
                       {suggestedUsageMinimum.toLocaleString('en-US', {
                         style: 'currency',
                         currency: 'USD',
@@ -959,7 +925,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                       prefix="$"
                       value={quoteMinimumInput}
                       onChange={(e) => setQuoteMinimumInput(e.target.value)}
-                      className="h-11 border-ew-border pl-8 font-mono text-sm font-semibold tabular-nums"
+                      className="h-11 border-ew-border pl-8 text-sm font-semibold"
                       wrapperClassName="w-full"
                     />
                   </div>
@@ -967,7 +933,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                     <span className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
                       Est. monthly usage rev.
                     </span>
-                    <div className="flex h-11 items-center justify-end rounded-lg border border-ew-border bg-ew-background/40 px-3 font-mono text-sm font-semibold tabular-nums text-ew-foreground">
+                    <div className="flex h-11 items-center justify-end rounded-lg border border-ew-border bg-ew-background/40 px-3 text-sm font-semibold text-ew-foreground">
                       {EST_MONTHLY_USAGE_REV.toLocaleString('en-US', {
                         style: 'currency',
                         currency: 'USD',
@@ -980,7 +946,7 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                     <span className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
                       % of est. monthly usage rev.
                     </span>
-                    <div className="flex h-11 items-center justify-end rounded-lg border border-ew-border bg-ew-background/40 px-3 font-mono text-sm font-semibold tabular-nums text-ew-foreground">
+                    <div className="flex h-11 items-center justify-end rounded-lg border border-ew-border bg-ew-background/40 px-3 text-sm font-semibold text-ew-foreground">
                       {USAGE_MIN_PERCENT_DEFAULT.toFixed(2)}%
                     </div>
                   </div>
@@ -1006,8 +972,8 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                      ].map((row, i) => (
                        <div key={i} className="p-4 grid grid-cols-[1fr_160px_160px] gap-4 items-center">
                           <span className="text-sm font-bold text-ew-muted-foreground">{row.name}</span>
-                          <span className="text-sm font-bold text-ew-foreground text-right font-mono opacity-60">{row.no}</span>
-                          <span className="text-sm font-black text-ew-foreground text-right font-mono">{row.with}</span>
+                          <span className="text-sm font-bold text-ew-foreground text-right opacity-60">{row.no}</span>
+                          <span className="text-sm font-black text-ew-foreground text-right">{row.with}</span>
                        </div>
                      ))}
                   </div>
@@ -1335,7 +1301,7 @@ export default function App() {
                 placeholder="Add context for this opportunity…"
                 aria-label="Opportunity context notes"
               />
-              <p className="mt-2 text-right text-xs tabular-nums text-ew-muted-foreground">
+              <p className="mt-2 text-right text-xs text-ew-muted-foreground">
                 {opportunityContextNotes.length}/400
               </p>
             </div>
@@ -1516,7 +1482,7 @@ export default function App() {
                                 Benchmark: Income, Assets, IDV
                               </h4>
                             </div>
-                            <div className="shrink-0 rounded-full border border-ew-border/40 bg-ew-background/30 px-3 py-1 text-xs font-medium tabular-nums text-ew-foreground sm:ml-auto">
+                            <div className="shrink-0 rounded-full border border-ew-border/40 bg-ew-background/30 px-3 py-1 text-xs font-medium text-ew-foreground sm:ml-auto">
                               $54K <span className="text-ew-muted-foreground">·</span> New
                             </div>
                           </div>
@@ -1533,7 +1499,7 @@ export default function App() {
                             >
                               <span className="min-w-0">Product</span>
                               <span
-                                className={cn('text-right tabular-nums', processStep >= 3 && 'border-r border-ew-border/20 pr-4 sm:pr-5')}
+                                className={cn('text-right', processStep >= 3 && 'border-r border-ew-border/20 pr-4 sm:pr-5')}
                               >
                                 Historical
                               </span>
@@ -1569,7 +1535,7 @@ export default function App() {
                                     </div>
                                     <span
                                       className={cn(
-                                        'pt-0.5 text-right text-sm font-medium tabular-nums text-ew-foreground',
+                                        'pt-0.5 text-right text-sm font-medium text-ew-foreground',
                                         showRecColumn && 'border-r border-ew-border/20 pr-4 sm:pr-5',
                                       )}
                                     >
@@ -1589,10 +1555,10 @@ export default function App() {
                                               <Badge color={rec.confidence === 'HIGH' ? 'green' : 'yellow'} size="small">
                                                 {toSentenceCase(rec.confidence)}
                                               </Badge>
-                                              <span className="whitespace-nowrap text-sm font-medium tabular-nums text-ew-foreground">
+                                              <span className="whitespace-nowrap text-sm font-medium text-ew-foreground">
                                                 {rec.price}
                                               </span>
-                                              <span className="text-xs font-medium tabular-nums text-ew-muted-foreground/90">
+                                              <span className="text-xs font-medium text-ew-muted-foreground/90">
                                                 / {rec.units}
                                               </span>
                                             </div>
@@ -1602,7 +1568,7 @@ export default function App() {
                                           </div>
                                         ) : (
                                           <div className="flex flex-col items-end gap-0.5">
-                                            <span className="text-sm tabular-nums text-ew-muted-foreground/40 sm:text-right">—</span>
+                                            <span className="text-sm text-ew-muted-foreground/40 sm:text-right">—</span>
                                             <span className="text-xs text-ew-muted-foreground/70">No change</span>
                                           </div>
                                         )}
@@ -1643,11 +1609,11 @@ export default function App() {
                                   className="grid grid-cols-[1fr_56px_1fr_80px] items-center gap-x-3 py-3 text-sm min-[480px]:grid-cols-[1fr_60px_160px_80px] min-[480px]:gap-x-4"
                                 >
                                   <span className="min-w-0 font-medium text-ew-foreground">{row.name}</span>
-                                  <span className="tabular-nums font-medium text-ew-foreground">{row.acv}</span>
+                                  <span className="font-medium text-ew-foreground">{row.acv}</span>
                                   <span className="min-w-0 text-xs font-medium text-ew-muted-foreground/90">
                                     {row.prods}
                                   </span>
-                                  <span className="text-right text-sm font-medium tabular-nums text-ew-foreground">
+                                  <span className="text-right text-sm font-medium text-ew-foreground">
                                     {row.match}%
                                   </span>
                                 </div>
@@ -1689,7 +1655,7 @@ export default function App() {
                               <p className="text-xs font-medium tracking-tight text-ew-muted-foreground/90">
                                 Employees
                               </p>
-                              <p className="text-sm font-medium tabular-nums text-ew-foreground">9</p>
+                              <p className="text-sm font-medium text-ew-foreground">9</p>
                             </div>
                           </div>
                           <div className="space-y-2 border-t border-ew-border/30 pt-3">
@@ -1697,7 +1663,7 @@ export default function App() {
                               <span className="shrink-0 text-xs font-medium text-ew-muted-foreground">
                                 Platform fee
                               </span>
-                              <span className="text-right text-sm font-medium tabular-nums text-ew-foreground">
+                              <span className="text-right text-sm font-medium text-ew-foreground">
                                 $1,000/mo
                               </span>
                             </div>
@@ -1705,7 +1671,7 @@ export default function App() {
                               <span className="shrink-0 text-xs font-medium text-ew-muted-foreground">
                                 Usage commitment
                               </span>
-                              <span className="text-right text-sm font-medium tabular-nums text-ew-foreground">
+                              <span className="text-right text-sm font-medium text-ew-foreground">
                                 $1,000/mo
                               </span>
                             </div>
