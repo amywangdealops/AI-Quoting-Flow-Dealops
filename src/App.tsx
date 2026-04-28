@@ -816,21 +816,6 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                   <span />
                </div>
                <div className="divide-y divide-ew-border/50">
-                  {/* Ramp applies to every line item */}
-                  <div className="grid grid-cols-[minmax(140px,1fr)_120px_100px_100px_152px_100px_100px_140px_40px] gap-4 items-start bg-brand-accent-gold/[0.06] px-4 py-3">
-                    <div className="col-span-4 flex min-w-0 flex-col gap-1">
-                      <span className="text-xs font-semibold text-ew-foreground">Ramp (all products)</span>
-                      <span className="text-xs font-normal leading-snug text-ew-muted-foreground">
-                        Same schedule on every line: Mo 1–4 entry rates → stair-step +2.5%/mo Mo 5–12 to the quoted unit
-                        price.
-                      </span>
-                    </div>
-                    <div className="col-span-5 flex items-center justify-end">
-                      <span className="max-w-xl text-right text-xs leading-snug text-ew-muted-foreground">
-                        Effective blended rate follows this ramp for Auth, Identity, Balance, and platform fee rows.
-                      </span>
-                    </div>
-                  </div>
                   {pricingRows.map((row, i) => (
                     <div key={i} className="group grid grid-cols-[minmax(140px,1fr)_120px_100px_100px_152px_100px_100px_140px_40px] gap-4 items-center p-4 transition-colors hover:bg-ew-background/50">
                        <Tooltip as="div" location="TOP" text={row.reasoning} className="min-w-0 cursor-default">
