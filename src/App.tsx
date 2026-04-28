@@ -29,7 +29,9 @@ import {
 } from 'lucide-react';
 import { Button } from './components/Button';
 import Badge from './components/Badge';
-import { Input } from './components/Input';
+import { Button as ShadcnButton } from '@/components/ui/button';
+import { Input as ShadcnInput } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import Tooltip from './components/Tooltip';
 import Toggle from './components/Toggle';
 import {
@@ -912,22 +914,25 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label
+                    <Label
                       htmlFor="quote-minimum-input"
                       className="text-xs font-semibold tracking-tight text-ew-muted-foreground"
                     >
                       Quote minimum
-                    </label>
-                    <Input
-                      id="quote-minimum-input"
-                      type="text"
-                      inputMode="decimal"
-                      prefix="$"
-                      value={quoteMinimumInput}
-                      onChange={(e) => setQuoteMinimumInput(e.target.value)}
-                      className="h-11 border-ew-border pl-8 text-sm font-semibold"
-                      wrapperClassName="w-full"
-                    />
+                    </Label>
+                    <div className="relative w-full">
+                      <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-sm text-muted-foreground">
+                        $
+                      </span>
+                      <ShadcnInput
+                        id="quote-minimum-input"
+                        type="text"
+                        inputMode="decimal"
+                        value={quoteMinimumInput}
+                        onChange={(e) => setQuoteMinimumInput(e.target.value)}
+                        className="h-11 border-ew-border pl-8 text-sm font-semibold"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <span className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
@@ -1032,8 +1037,12 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
             </div>
           </div>
           <div className="flex items-center gap-4">
-             <Button color="white" label="Back" onClick={onBack} />
-             <Button color="primary" label="Finish" onClick={onFinish} />
+             <ShadcnButton type="button" variant="outline" className="h-10 px-4" onClick={onBack}>
+               Back
+             </ShadcnButton>
+             <ShadcnButton type="button" className="h-10 bg-ew-primary px-4 text-ew-primary-foreground hover:bg-ew-primary/90" onClick={onFinish}>
+               Finish
+             </ShadcnButton>
           </div>
         </footer>
       </div>
@@ -1687,13 +1696,13 @@ export default function App() {
               {processStep >= 4 && processStep < 5 && (
                 <div className="relative z-20 flex shrink-0 flex-col gap-2 border-t border-ew-border bg-white px-5 py-3 md:flex-row md:items-end md:gap-3 md:px-8 md:py-3">
                   <div className="min-w-0 flex-1 space-y-1">
-                    <label
+                    <Label
                       htmlFor="copilot-quote-name"
                       className="block text-xs font-black tracking-tight text-ew-muted-foreground/60"
                     >
                       Quote name
-                    </label>
-                    <Input
+                    </Label>
+                    <ShadcnInput
                       id="copilot-quote-name"
                       type="text"
                       value={quoteName}
@@ -1703,18 +1712,17 @@ export default function App() {
                     />
                   </div>
                   <div className="flex shrink-0 justify-stretch md:justify-end">
-                    <Button
-                      color="primary"
+                    <ShadcnButton
+                      type="button"
+                      className="w-full gap-2 bg-ew-primary px-4 py-2 text-sm font-semibold text-ew-primary-foreground shadow-sm hover:bg-ew-primary/90 md:w-auto"
                       onClick={() => {
                         setIsCopilotOpen(false);
                         setCurrentView('pricing-options');
                       }}
-                      className="w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm md:w-auto"
-                      textAlign="center"
                     >
                       <span>Finalize and Review Quote</span>
                       <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-50" />
-                    </Button>
+                    </ShadcnButton>
                   </div>
                 </div>
               )}
@@ -1752,18 +1760,21 @@ export default function App() {
                         </div>
 
                         <div className="flex items-center gap-5">
-                           <Button
-                             color="white"
-                             label="Close"
+                           <ShadcnButton
+                             type="button"
+                             variant="outline"
                              className="flex-1 justify-center"
                              onClick={() => { setIsCopilotOpen(false); setProcessStep(-1); }}
-                           />
-                           <Button
-                             color="primary"
-                             label="View Optimized Quote"
-                             className="flex-1 justify-center"
+                           >
+                             Close
+                           </ShadcnButton>
+                           <ShadcnButton
+                             type="button"
+                             className="flex-1 justify-center bg-ew-primary text-ew-primary-foreground hover:bg-ew-primary/90"
                              onClick={() => { setIsCopilotOpen(false); setCurrentView('pricing-options'); }}
-                           />
+                           >
+                             View Optimized Quote
+                           </ShadcnButton>
                         </div>
                      </div>
                   </motion.div>
