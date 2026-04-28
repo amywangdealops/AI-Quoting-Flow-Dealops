@@ -39,8 +39,8 @@ export default function Toggle({ enabled, onToggle, disabled, className, size = 
       disabled={disabled}
       onClick={() => !disabled && onToggle(!enabled)}
       className={cn(
-        enabled ? 'bg-fuchsia-900' : 'bg-gray-200',
-        'relative inline-flex flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-fuchsia-900 focus:ring-offset-2',
+        enabled ? 'bg-ew-primary' : 'bg-gray-200',
+        'relative inline-flex flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ew-primary focus:ring-offset-2',
         sc.track,
         disabled && 'opacity-50 cursor-not-allowed',
         className,
