@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Loader2,
   MoreHorizontal,
-  Info,
   MessageSquare,
   ChevronRight,
   ExternalLink,
@@ -22,7 +21,6 @@ import {
   Menu,
   ChevronDown,
   Trash2,
-  Calendar,
   Lock,
   Monitor,
   Check,
@@ -461,64 +459,102 @@ const SelectProductsView = ({
 
 // --- Quote Detail View Component ---
 
+const EST_MONTHLY_USAGE_REV = 1674.33;
+const USAGE_MIN_PERCENT_DEFAULT = 67;
+
 const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { onBack: () => void, onSelectProducts: () => void, onFinish: () => void, quoteName: string }) => {
-  const [usageMinimum, setUsageMinimum] = useState(false);
+  const suggestedUsageMinimum =
+    Math.round(((EST_MONTHLY_USAGE_REV * USAGE_MIN_PERCENT_DEFAULT) / 100) * 100) / 100;
+  const [usageMinimum, setUsageMinimum] = useState(true);
+  const [quoteMinimumInput, setQuoteMinimumInput] = useState(() => suggestedUsageMinimum.toFixed(2));
   const [isRecapExpanded, setIsRecapExpanded] = useState(true);
+
+  const [quoteTerms, setQuoteTerms] = useState({
+    startDate: '2026-04-26',
+    endDate: '2028-04-30',
+    billingFrequency: 'semi-annual',
+    paymentTerms: 'net-30',
+    subscriptionMonths: '12',
+    offerExpiration: '2026-05-26',
+    renewalPriceProtection: 'yes',
+    priceProtectionCap: '8',
+    autoRenew: 'yes',
+    waivedOverages: 'none',
+  });
 
   const chartData = [
     { name: 'No Commitment', total: 54988, color: '#006644' },
     { name: 'With Commitment', total: 32092, savings: 22896, color: '#006644' },
   ];
 
-  const pricingRows = [
-    { 
+  const pricingRows: {
+    id: string;
+    name: string;
+    vol: string;
+    list: string;
+    l1: string;
+    quote: string;
+    discount: string;
+    revenue: string;
+    reasoning: string;
+    priceReasoning: string;
+    tiered?: boolean;
+  }[] = [
+    {
       id: 'auth',
-      name: 'Auth', 
-      vol: '833 / mo', 
-      list: '$1.500', 
-      l1: '$1.200', 
-      quote: '$0.967', 
-      discount: '35.49%', 
+      name: 'Auth',
+      vol: '833 / mo',
+      list: '$1.500',
+      l1: '$1.200',
+      quote: '$0.967',
+      discount: '35.49%',
       revenue: '$725.78',
-      reasoning: "Explicitly mentioned as a core product for bank account verification in Call 4 (10/15) and Call 6 (10/08).",
-      priceReasoning: "Part of a $2/account bundled rate for Auth, Identity, and Balance (Call 4, 10/15). Price split proportionally using ratios from Binaxity deal (Auth: $1.38, Balance: $0.092, Identity: $1.38)."
+      reasoning:
+        'Explicitly mentioned as a core product for bank account verification in Call 4 (10/15) and Call 6 (10/08).',
+      priceReasoning:
+        'Part of a $2/account bundled rate for Auth, Identity, and Balance (Call 4, 10/15). Price split proportionally using ratios from Binaxity deal (Auth: $1.38, Balance: $0.092, Identity: $1.38).',
+      tiered: true,
     },
-    { 
+    {
       id: 'identity',
-      name: 'Identity', 
-      vol: '833 / mo', 
-      list: '$1.500', 
-      l1: '$1.200', 
-      quote: '$0.967', 
-      discount: '35.49%', 
+      name: 'Identity',
+      vol: '833 / mo',
+      list: '$1.500',
+      l1: '$1.200',
+      quote: '$0.967',
+      discount: '35.49%',
       revenue: '$725.78',
-      reasoning: "Explicitly mentioned for matching account holder to user in Call 6 (10/08) and as a core product in Call 4 (10/15).",
-      priceReasoning: "Part of a $2/account bundled rate for Auth, Identity, and Balance (Call 4, 10/15). Price split proportionally using ratios from Binaxity deal (Auth: $1.38, Balance: $0.092, Identity: $1.38)."
+      reasoning:
+        'Explicitly mentioned for matching account holder to user in Call 6 (10/08) and as a core product in Call 4 (10/15).',
+      priceReasoning:
+        'Part of a $2/account bundled rate for Auth, Identity, and Balance (Call 4, 10/15). Price split proportionally using ratios from Binaxity deal (Auth: $1.38, Balance: $0.092, Identity: $1.38).',
+      tiered: true,
     },
-    { 
+    {
       id: 'balance',
-      name: 'Balance', 
-      vol: '833 / mo', 
-      list: '$0.100', 
-      l1: '$0.080', 
-      quote: '$0.064', 
-      discount: '35.50%', 
+      name: 'Balance',
+      vol: '833 / mo',
+      list: '$0.100',
+      l1: '$0.080',
+      quote: '$0.064',
+      discount: '35.50%',
       revenue: '$48.38',
-      reasoning: "Unified provider for Balance (checking) for bank account linking as discussed in Call 6 (10/08).",
-      priceReasoning: "Part of a $2/account bundled rate for Auth, Identity, and Balance (Call 4, 10/15). Price split proportionally using ratios from Binaxity deal (Auth: $1.38, Balance: $0.092, Identity: $1.38)."
+      reasoning: 'Unified provider for Balance (checking) for bank account linking as discussed in Call 6 (10/08).',
+      priceReasoning:
+        'Part of a $2/account bundled rate for Auth, Identity, and Balance (Call 4, 10/15). Price split proportionally using ratios from Binaxity deal (Auth: $1.38, Balance: $0.092, Identity: $1.38).',
     },
-    { 
+    {
       id: 'platform',
-      name: 'Platform Support Services - Basic', 
-      vol: '1 / mo', 
-      list: '$2,000.000', 
-      l1: '$1,600.000', 
-      quote: '$1,000.000', 
-      discount: '50.00%', 
+      name: 'Platform Support Services - Basic',
+      vol: '1 / mo',
+      list: '$2,000.000',
+      l1: '$1,600.000',
+      quote: '$1,000.000',
+      discount: '50.00%',
       revenue: '$1,000.00',
-      reasoning: "Customer agreed to a fixed platform fee of $1,000 per month in Call 4 (10/15).",
-      priceReasoning: "Customer-agreed price of $1,000 per month from Call 4 (10/15)."
-    }
+      reasoning: 'Customer agreed to a fixed platform fee of $1,000 per month in Call 4 (10/15).',
+      priceReasoning: 'Customer-agreed price of $1,000 per month from Call 4 (10/15).',
+    },
   ];
 
   return (
@@ -631,27 +667,176 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                </div>{/* end collapsible */}
             </div>
 
-            {/* Config Bar */}
-            <div className="grid grid-cols-2 gap-8">
-               <div className="space-y-2">
-                  <label className="text-xs font-black text-ew-muted-foreground tracking-tight">Start Date</label>
-                  <div className="w-full h-11 bg-white border border-ew-border rounded-xl px-4 flex items-center justify-between text-sm font-bold">
-                     <span>04/26/2026</span>
-                     <Calendar className="w-4 h-4 text-ew-muted-foreground opacity-40" />
+            {/* Commercial terms — all editable (white fields) */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold tracking-tight text-ew-muted-foreground">Commercial terms</h3>
+              <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="space-y-2">
+                  <label htmlFor="qt-start" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    Start date
+                  </label>
+                  <input
+                    id="qt-start"
+                    type="date"
+                    value={quoteTerms.startDate}
+                    onChange={(e) => setQuoteTerms((t) => ({ ...t, startDate: e.target.value }))}
+                    className="h-11 w-full rounded-xl border border-ew-border bg-white px-4 text-sm font-semibold text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="qt-end" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    End date
+                  </label>
+                  <input
+                    id="qt-end"
+                    type="date"
+                    value={quoteTerms.endDate}
+                    onChange={(e) => setQuoteTerms((t) => ({ ...t, endDate: e.target.value }))}
+                    className="h-11 w-full rounded-xl border border-ew-border bg-white px-4 text-sm font-semibold text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="qt-billing" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    Billing frequency
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="qt-billing"
+                      value={quoteTerms.billingFrequency}
+                      onChange={(e) => setQuoteTerms((t) => ({ ...t, billingFrequency: e.target.value }))}
+                      className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-ew-border bg-white py-2 pl-4 pr-10 text-sm font-semibold text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="semi-annual">Semi-annually</option>
+                      <option value="annual">Annually</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ew-muted-foreground opacity-60" />
                   </div>
-               </div>
-               <div className="space-y-2">
-                  <label className="text-xs font-black text-ew-muted-foreground tracking-tight">Subscription Terms</label>
-                  <div className="w-full h-11 bg-white border border-ew-border rounded-xl px-4 flex items-center justify-between text-sm font-bold">
-                     <span>12</span>
-                     <span className="text-xs text-ew-muted-foreground font-medium tracking-tight">Months</span>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="qt-pay" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    Payment terms
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="qt-pay"
+                      value={quoteTerms.paymentTerms}
+                      onChange={(e) => setQuoteTerms((t) => ({ ...t, paymentTerms: e.target.value }))}
+                      className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-ew-border bg-white py-2 pl-4 pr-10 text-sm font-semibold text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
+                    >
+                      <option value="net-15">Net 15</option>
+                      <option value="net-30">Net 30</option>
+                      <option value="net-45">Net 45</option>
+                      <option value="net-60">Net 60</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ew-muted-foreground opacity-60" />
                   </div>
-               </div>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="qt-sub" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    Subscription length
+                  </label>
+                  <div className="flex h-11 overflow-hidden rounded-xl border border-ew-border bg-white shadow-sm focus-within:border-ew-primary focus-within:ring-2 focus-within:ring-ew-primary/15">
+                    <input
+                      id="qt-sub"
+                      type="number"
+                      min={1}
+                      max={120}
+                      value={quoteTerms.subscriptionMonths}
+                      onChange={(e) => setQuoteTerms((t) => ({ ...t, subscriptionMonths: e.target.value }))}
+                      className="min-w-0 flex-1 border-0 bg-transparent px-4 text-sm font-semibold text-ew-foreground outline-none"
+                    />
+                    <span className="flex shrink-0 items-center border-l border-ew-border bg-white px-3 text-xs font-medium text-ew-muted-foreground">
+                      Months
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="qt-offer" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    Offer expiration
+                  </label>
+                  <input
+                    id="qt-offer"
+                    type="date"
+                    value={quoteTerms.offerExpiration}
+                    onChange={(e) => setQuoteTerms((t) => ({ ...t, offerExpiration: e.target.value }))}
+                    className="h-11 w-full rounded-xl border border-ew-border bg-white px-4 text-sm font-semibold text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="qt-renew-protect" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    Renewal price protection
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="qt-renew-protect"
+                      value={quoteTerms.renewalPriceProtection}
+                      onChange={(e) => setQuoteTerms((t) => ({ ...t, renewalPriceProtection: e.target.value }))}
+                      className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-ew-border bg-white py-2 pl-4 pr-10 text-sm font-semibold text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
+                    >
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ew-muted-foreground opacity-60" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="qt-cap" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    Price protection cap (%)
+                  </label>
+                  <input
+                    id="qt-cap"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.01}
+                    value={quoteTerms.priceProtectionCap}
+                    onChange={(e) => setQuoteTerms((t) => ({ ...t, priceProtectionCap: e.target.value }))}
+                    className="h-11 w-full rounded-xl border border-ew-border bg-white px-4 text-sm font-semibold tabular-nums text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="qt-auto" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    Auto renew
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="qt-auto"
+                      value={quoteTerms.autoRenew}
+                      onChange={(e) => setQuoteTerms((t) => ({ ...t, autoRenew: e.target.value }))}
+                      className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-ew-border bg-white py-2 pl-4 pr-10 text-sm font-semibold text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
+                    >
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ew-muted-foreground opacity-60" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="qt-waived" className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                    Waived overages
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="qt-waived"
+                      value={quoteTerms.waivedOverages}
+                      onChange={(e) => setQuoteTerms((t) => ({ ...t, waivedOverages: e.target.value }))}
+                      className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-ew-border bg-white py-2 pl-4 pr-10 text-sm font-semibold text-ew-foreground shadow-sm outline-none transition-colors focus-visible:border-ew-primary focus-visible:ring-2 focus-visible:ring-ew-primary/15"
+                    >
+                      <option value="none">None</option>
+                      <option value="first-month">First month</option>
+                      <option value="q1">Q1 only</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ew-muted-foreground opacity-60" />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Pricing Table */}
             <div className="bg-white border border-ew-border rounded-2xl overflow-hidden shadow-sm">
-               <div className="p-4 bg-ew-muted/20 border-b border-ew-border grid grid-cols-[1fr_120px_100px_100px_120px_100px_100px_140px_40px] text-xs font-black text-ew-muted-foreground tracking-tight gap-4 items-center">
+               <div className="grid grid-cols-[minmax(140px,1fr)_120px_100px_100px_152px_100px_100px_140px_40px] gap-4 items-center border-b border-ew-border bg-ew-muted/20 p-4 text-xs font-black tracking-tight text-ew-muted-foreground">
                   <span>Products</span>
                   <span className="text-center">Volume</span>
                   <span className="text-right">List Price</span>
@@ -663,32 +848,71 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                   <span />
                </div>
                <div className="divide-y divide-ew-border/50">
+                  {/* Ramp applies to every line item */}
+                  <div className="grid grid-cols-[minmax(140px,1fr)_120px_100px_100px_152px_100px_100px_140px_40px] gap-4 items-start bg-brand-accent-gold/[0.06] px-4 py-3">
+                    <div className="col-span-4 flex min-w-0 flex-col gap-1">
+                      <span className="text-xs font-semibold text-ew-foreground">Ramp (all products)</span>
+                      <span className="text-xs font-normal leading-snug text-ew-muted-foreground">
+                        Same schedule on every line: Mo 1–4 entry rates → stair-step +2.5%/mo Mo 5–12 to the quoted unit
+                        price.
+                      </span>
+                    </div>
+                    <div className="col-span-5 flex items-center justify-end">
+                      <span className="max-w-xl text-right text-xs leading-snug text-ew-muted-foreground">
+                        Effective blended rate follows this ramp for Auth, Identity, Balance, and platform fee rows.
+                      </span>
+                    </div>
+                  </div>
                   {pricingRows.map((row, i) => (
-                    <div key={i} className="p-4 grid grid-cols-[1fr_120px_100px_100px_120px_100px_100px_140px_40px] gap-4 items-center group hover:bg-ew-background/50 transition-colors">
-                       <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-ew-foreground">{row.name}</span>
-                          <Tooltip as="span" location="TOP" text={row.reasoning}>
-                            <Info className="w-3.5 h-3.5 text-ew-muted-foreground opacity-20 group-hover:opacity-60 cursor-help transition-opacity" />
-                          </Tooltip>
-                       </div>
-                       <div className="h-9 border border-ew-border rounded-lg bg-ew-background/30 flex items-center justify-center text-xs font-bold font-mono">
+                    <div key={i} className="group grid grid-cols-[minmax(140px,1fr)_120px_100px_100px_152px_100px_100px_140px_40px] gap-4 items-center p-4 transition-colors hover:bg-ew-background/50">
+                       <Tooltip as="div" location="TOP" text={row.reasoning} className="min-w-0 cursor-default">
+                          <div className="text-xs font-bold text-ew-foreground">{row.name}</div>
+                       </Tooltip>
+                       <div className="flex h-9 items-center justify-center rounded-lg border border-ew-border bg-ew-background/30 font-mono text-xs font-bold">
                           {row.vol}
                        </div>
-                       <div className="text-xs font-bold text-green-600 text-right font-mono">{row.list}</div>
-                       <div className="text-xs font-bold text-brand-accent-gold text-right font-mono">{row.l1}</div>
-                       <div className="h-9 border border-ew-border rounded-lg bg-white flex items-center justify-center text-xs font-bold font-mono ring-2 ring-brand-accent-gold/10 relative">
-                          {row.quote}
-                          <Tooltip as="span" location="TOP" text={row.priceReasoning} className="absolute -right-2 -top-2 z-10">
-                            <Info className="w-3 h-3 text-ew-muted-foreground opacity-0 group-hover:opacity-40 cursor-help transition-opacity" />
-                          </Tooltip>
-                       </div>
-                       <div className="text-xs font-bold text-ew-muted-foreground text-center font-mono opacity-60">{row.discount}</div>
+                       <div className="text-right font-mono text-xs font-bold text-green-600">{row.list}</div>
+                       <div className="text-right font-mono text-xs font-bold text-brand-accent-gold">{row.l1}</div>
+                       {row.tiered ? (
+                         <div className="flex h-9 items-stretch justify-end gap-1.5">
+                           <Tooltip
+                             as="span"
+                             className="flex min-w-0 flex-1 cursor-default"
+                             location="TOP"
+                             text={row.priceReasoning}
+                           >
+                             <button
+                               type="button"
+                               className="flex h-full w-full min-w-0 items-center justify-end rounded-lg border border-ew-border bg-white px-2 py-1.5 font-mono text-xs font-semibold text-ew-muted-foreground shadow-sm ring-2 ring-brand-accent-gold/10 hover:bg-ew-background/60"
+                             >
+                               Tiered
+                             </button>
+                           </Tooltip>
+                           <button
+                             type="button"
+                             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-ew-border bg-white text-ew-muted-foreground shadow-sm hover:bg-ew-background/80"
+                             aria-label="Tier settings"
+                           >
+                             <Settings className="h-3.5 w-3.5" />
+                           </button>
+                         </div>
+                       ) : (
+                         <Tooltip
+                           as="div"
+                           location="TOP"
+                           text={row.priceReasoning}
+                           className="flex h-9 cursor-default items-center justify-center rounded-lg border border-ew-border bg-white font-mono text-xs font-bold ring-2 ring-brand-accent-gold/10"
+                         >
+                            {row.quote}
+                         </Tooltip>
+                       )}
+                       <div className="text-center font-mono text-xs font-bold text-ew-muted-foreground opacity-60">{row.discount}</div>
                        <div className="flex justify-center">
                           <Badge color="green" size="small">None</Badge>
                        </div>
-                       <div className="text-xs font-bold text-ew-foreground text-right font-mono">{row.revenue}</div>
-                       <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Trash2 className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-500" />
+                       <div className="text-right font-mono text-xs font-bold text-ew-foreground">{row.revenue}</div>
+                       <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100">
+                          <Trash2 className="h-4 w-4 cursor-pointer text-red-400 hover:text-red-500" />
                        </div>
                     </div>
                   ))}
@@ -698,10 +922,70 @@ const QuoteDetailView = ({ onBack, onSelectProducts, onFinish, quoteName }: { on
                </div>
             </div>
 
-            {/* Toggle Row */}
-            <div className="flex items-center gap-4 pl-4">
-               <Toggle enabled={usageMinimum} onToggle={setUsageMinimum} size="small" />
-               <span className="text-xs font-black tracking-tight text-ew-muted-foreground opacity-80">Monthly usage minimum</span>
+            {/* Monthly usage minimum */}
+            <div className="flex flex-col gap-4 pl-4">
+              <div className="flex items-center gap-4">
+                <Toggle enabled={usageMinimum} onToggle={setUsageMinimum} size="small" />
+                <span className="text-xs font-black tracking-tight text-ew-muted-foreground opacity-80">
+                  Monthly usage minimum
+                </span>
+              </div>
+              {usageMinimum && (
+                <div className="grid grid-cols-1 gap-4 rounded-xl border border-ew-border bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                      Suggested minimum
+                    </span>
+                    <div className="flex h-11 items-center justify-end rounded-lg border-2 border-emerald-600/35 bg-white px-3 font-mono text-sm font-semibold tabular-nums text-ew-foreground">
+                      {suggestedUsageMinimum.toLocaleString('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="quote-minimum-input"
+                      className="text-xs font-semibold tracking-tight text-ew-muted-foreground"
+                    >
+                      Quote minimum
+                    </label>
+                    <Input
+                      id="quote-minimum-input"
+                      type="text"
+                      inputMode="decimal"
+                      prefix="$"
+                      value={quoteMinimumInput}
+                      onChange={(e) => setQuoteMinimumInput(e.target.value)}
+                      className="h-11 border-ew-border pl-8 font-mono text-sm font-semibold tabular-nums"
+                      wrapperClassName="w-full"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                      Est. monthly usage rev.
+                    </span>
+                    <div className="flex h-11 items-center justify-end rounded-lg border border-ew-border bg-ew-background/40 px-3 font-mono text-sm font-semibold tabular-nums text-ew-foreground">
+                      {EST_MONTHLY_USAGE_REV.toLocaleString('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold tracking-tight text-ew-muted-foreground">
+                      % of est. monthly usage rev.
+                    </span>
+                    <div className="flex h-11 items-center justify-end rounded-lg border border-ew-border bg-ew-background/40 px-3 font-mono text-sm font-semibold tabular-nums text-ew-foreground">
+                      {USAGE_MIN_PERCENT_DEFAULT.toFixed(2)}%
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Lower Grid: Breakdown and Chart */}
